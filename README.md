@@ -20,6 +20,8 @@ MacBook Air M2 (16GB) 위에서 **오픈소스 로컬 LLM으로 직접 에이전
 - [docs/01-research-report.md](docs/01-research-report.md) — 하드웨어 분석 + 모델/런타임/임베딩 딥리서치 결과 (2026-07, 검증 완료)
 - [docs/02-architecture.md](docs/02-architecture.md) — 전체 아키텍처, 기술 스택, 메모리 예산, 로드맵
 - [docs/03-observability.md](docs/03-observability.md) — 트레이스 스키마, 메트릭 4계층, A/B 평가 하네스 설계
+- [docs/lab-notes/](docs/lab-notes/) — **실험 전환점 기록**: 가설 반증·병목 발견·설계 변경을 발생 즉시 남긴다
+- [reports/](reports/) — 어블레이션 등 측정 리포트 (회귀 게이트용으로 커밋 보존)
 
 ## 이 프로젝트가 아닌 것
 
