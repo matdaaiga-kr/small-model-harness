@@ -54,9 +54,29 @@ def smoke() -> None:
 
 
 @app.command()
-def ingest() -> None:
-    """위키 색인 (M1에서 구현)."""
-    console.print("[yellow]M1에서 구현 예정[/yellow]")
+def ingest(
+    wiki: str = typer.Option(None, help="위키 루트 (기본: config.WIKI_ROOT)"),
+    full: bool = typer.Option(False, "--full", help="증분 상태 무시하고 전체 재색인"),
+) -> None:
+    """위키 색인: 로더 → 청커 → KURE 임베딩 → LanceDB/BM25/링크 그래프. 재실행 시 변경분만."""
+    from pathlib import Path
+
+    from harness import config
+    from harness.ingest.indexer import ingest as run_ingest
+    from harness.obs.trace import TraceLogger
+
+    root = Path(wiki).expanduser() if wiki else config.WIKI_ROOT
+    console.print(f"색인 시작: [bold]{root}[/bold] {'(전체 재색인)' if full else '(증분)'}")
+    t = TraceLogger(mode="ingest")
+    try:
+        report = run_ingest(root, full=full)
+    finally:
+        t.close()
+    console.print(
+        f"[green]완료[/green] 페이지 {report.total_pages}개 중 변경 {report.changed_pages}"
+        f" · 삭제 {report.deleted_pages} · 새 청크 {report.new_chunks} · 총 청크 {report.total_chunks}"
+        f"  (trace: {t.run_id})"
+    )
 
 
 @app.command()
