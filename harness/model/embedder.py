@@ -34,5 +34,14 @@ def embed(texts: list[str], *, batch_size: int = 16) -> list[list[float]]:
             normalize_embeddings=True,
             show_progress_bar=False,
         )
+        _release_mps_cache()
     trace.log("retrieve", op="embed", n_texts=len(texts), latency_ms={"total": t.ms})
     return vectors.tolist()
+
+
+def _release_mps_cache() -> None:
+    """MPS 캐시 버퍼 반환 — Ollama와 통합 메모리를 나눠 쓰므로 스와핑 절벽 완화 (docs/01 §5)."""
+    import torch
+
+    if torch.backends.mps.is_available():
+        torch.mps.empty_cache()

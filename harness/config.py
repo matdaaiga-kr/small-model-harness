@@ -27,7 +27,9 @@ EMBED_MODEL_ID = "nlpai-lab/KURE-v1"  # sentence-transformers, 인프로세스(M
 
 # ── 예산 (16GB 제약에서 나온 숫자들 — docs/02 §5, docs/01 §5) ───────────
 CONTEXT_WINDOW = 8192          # 8K가 현실적 상한
-PREFILL_BUDGET = 3000          # 컨텍스트 조립 상한(토큰) — 프리필이 곧 지연
+# 컨텍스트 조립 상한(토큰). 실측 프리필 ~65 tok/s (2026-07-18, 3K 프롬프트 44s)라
+# 30초 응답 목표를 지키려면 1500이 상한 — 문서의 "예: 3K"는 낙관치였다.
+PREFILL_BUDGET = 1500
 DEFAULT_TEMPERATURE = 0.2
 
 # ── 에이전트 루프 가드레일 기본값 ────────────────────────────────────────
