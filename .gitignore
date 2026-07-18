@@ -1,0 +1,6 @@
+data/
+traces/
+metrics.sqlite
+__pycache__/
+.venv/
+*.egg-info/
