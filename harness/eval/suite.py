@@ -15,8 +15,9 @@ from harness import config
 
 
 class Expect(BaseModel):
-    pages: list[str]
+    pages: list[str] = []
     must_cite: bool = True
+    require_all: bool = False   # True면 모든 기대 페이지가 답변에 있어야 성공 (멀티홉)
     rubric: str = ""
 
 
@@ -24,6 +25,8 @@ class Task(BaseModel):
     id: str
     question: str
     expect: Expect
+    # qa: 정답 페이지 채점 / probe: 하네스 압박 태스크 — 환각 툴콜 없음이 성공 기준
+    kind: str = "qa"
 
 
 def load_suite(path: Path | None = None) -> list[Task]:
@@ -58,6 +61,7 @@ def eval_retrieval(tasks: list[Task], *, k: int = 5, expand: bool = True) -> Ret
     from harness.query import retriever
 
     results = []
+    tasks = [t for t in tasks if t.kind == "qa" and t.expect.pages]
     for task in tasks:
         hits = retriever.search(task.question, expand=expand)
         # 청크 순위 → 페이지 순위 (첫 등장 기준)

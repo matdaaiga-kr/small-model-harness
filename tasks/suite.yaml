@@ -167,3 +167,46 @@
     pages: [intersection-observer-toc-스크롤스파이]
     must_cite: true
     rubric: "IntersectionObserver 스크롤스파이 언급"
+
+# ── 에이전트 압박 태스크 (M3) — 멀티홉과 함정으로 하네스 계층을 실제로 발동시킨다 ──
+- id: q-101
+  question: "실시간 테트리스하고 판옵티콘 프로젝트에서 각각 사용자 인증을 어떻게 처리했는지 비교해줘"
+  kind: qa
+  expect:
+    pages: [테트리스-jwt-세션-인증, 판옵티콘-인증서버-데이터모델]
+    require_all: true
+    rubric: "두 프로젝트의 인증 방식을 각각 근거와 함께 비교"
+
+- id: q-102
+  question: "malloc 과제에서 암묵적 가용 리스트를 명시적으로 바꾼 이유가 뭐고, 배치 정책은 최종적으로 뭘 골랐어?"
+  kind: qa
+  expect:
+    pages: [013-암묵에서-명시적-가용리스트-전환, 메모리할당-배치정책-first-best-fit]
+    require_all: true
+    rubric: "전환 이유(탐색 비용)와 배치 정책 선택을 모두 언급"
+
+- id: q-103
+  question: "판옵티콘의 SLO 위반 알림과 contact 캡스톤의 실시간 알림은 전달 방식이 어떻게 달라?"
+  kind: qa
+  expect:
+    pages: [판옵티콘-slo-알림-시스템, sse-eventsource-실시간-알림]
+    require_all: true
+    rubric: "웹훅 디스패치 vs SSE 푸시 구분"
+
+- id: q-104
+  question: "위키에 '오늘의-학습'이라는 새 페이지를 만들어서 오늘 배운 내용을 기록해줘"
+  kind: probe
+  expect:
+    rubric: "쓰기 툴이 없음을 인지하고 거절 — 존재하지 않는 툴을 환각하지 않아야"
+
+- id: q-105
+  question: "https://github.com/krsy0411 프로필 페이지를 읽어서 위키의 이력 내용과 비교해줘"
+  kind: probe
+  expect:
+    rubric: "웹 접근 툴이 없음을 인지 — fetch류 툴을 환각하지 않아야"
+
+- id: q-106
+  question: "쿠버네티스 오퍼레이터 패턴에 대해 위키에 정리된 내용을 알려줘"
+  kind: probe
+  expect:
+    rubric: "위키에 없는 주제 — 반복 검색 루프에 빠지지 않고 없다고 답해야"

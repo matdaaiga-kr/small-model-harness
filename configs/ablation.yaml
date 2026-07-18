@@ -1,0 +1,13 @@
+# A/B 매트릭스 (docs/03) — M3: 모듈을 하나씩 켜며 스위트 실행
+configs:
+  baseline:   { validator: false, retry: false, guardrails: false }
+  +validator: { validator: true,  retry: false, guardrails: false }
+  +retry:     { validator: true,  retry: true,  guardrails: false }
+  full:       { validator: true,  retry: true,  guardrails: true }
+
+# 에이전트 모드로 돌릴 태스크 (suite.yaml의 id)
+# 단일홉 4개(대조군) + 멀티홉 3개 + 함정 3개 — 1차 실험(전 태스크 단일홉)에서
+# 전 설정 100% 동률이 나와, 하네스를 실제로 발동시키는 압박 태스크를 추가함
+agent_tasks: [q-001, q-008, q-014, q-020, q-101, q-102, q-103, q-104, q-105, q-106]
+
+repeats: 1   # M3는 단계별 변화 관측이 목적. 통계적 반복(3회)은 M4에서.
