@@ -90,10 +90,9 @@ class AgentLoop:
             system += GUARDRAIL_PROMPT_LINE
         if self.t.planner_prompt:
             system += PLANNER_PROMPT_LINE
-        messages: list[dict[str, Any]] = [
-            {"role": "system", "content": system},
-            {"role": "user", "content": task},
-        ]
+        messages: list[dict[str, Any]] = []
+        self._push(messages, {"role": "system", "content": system})
+        self._push(messages, {"role": "user", "content": task})
         res = AgentResult(answer="")
         seen_calls: dict[str, str] = {}   # 실행한 (툴+인자) → 결과 요약 (가드레일용)
         failed_calls: set[str] = set()
@@ -106,31 +105,34 @@ class AgentLoop:
             if not r.tool_calls:
                 bounce = self._evidence_bounce(r.content, res)
                 if bounce is not None:
-                    messages.append({"role": "assistant", "content": r.content})
-                    messages.append({"role": "user", "content": bounce})
+                    self._push(messages, {"role": "assistant", "content": r.content})
+                    self._push(messages, {"role": "user", "content": bounce})
                     continue
                 res.answer = r.content.strip()
                 res.steps = step + 1
+                trace.log("message", role="assistant", content=res.answer, final=True)
                 return res
 
-            messages.append(self._assistant_msg(r))
+            self._push(messages, self._assistant_msg(r))
 
             for tc in r.tool_calls:
                 content = self._handle_call(tc, messages, res, seen_calls, failed_calls)
-                messages.append(
-                    {"role": "tool", "tool_call_id": tc.id, "content": content}
+                self._push(
+                    messages, {"role": "tool", "tool_call_id": tc.id, "content": content}
                 )
 
         # 스텝 상한 도달 → 폴백: 툴 없이 최종 답 강제
         trace.log("tool_call", guardrail={"step_cap_hit": True})
         res.fallback = True
         res.steps = config.MAX_STEPS
-        messages.append(
-            {"role": "user", "content": "지금까지 얻은 정보만으로 최종 답을 작성하라."}
+        self._push(
+            messages,
+            {"role": "user", "content": "지금까지 얻은 정보만으로 최종 답을 작성하라."},
         )
         self._enforce_budget(messages)
         r = self._chat(messages, res, tools=False)
         res.answer = r.content.strip()
+        trace.log("message", role="assistant", content=res.answer, final=True)
         return res
 
     # ── 툴 콜 1건 처리: 검증 → (수리) → 가드레일 → 실행 ─────────────────
@@ -202,20 +204,22 @@ class AgentLoop:
         while not verdict.ok and retries < config.MAX_RETRIES:
             retries += 1
             res.retries += 1
-            messages.append(
-                {"role": "tool", "tool_call_id": tc.id, "content": f"오류: {verdict.error}"}
+            self._push(
+                messages,
+                {"role": "tool", "tool_call_id": tc.id, "content": f"오류: {verdict.error}"},
             )
-            messages.append(
+            self._push(
+                messages,
                 {
                     "role": "user",
                     "content": "직전 툴 호출이 검증에 실패했다. 오류를 반영해 같은 목적의 호출을 정확한 툴 이름과 인자로 다시 하라.",
-                }
+                },
             )
             r = self._chat(messages, res)
             if not r.tool_calls:
                 break
             tc = r.tool_calls[0]
-            messages.append(self._assistant_msg(r))
+            self._push(messages, self._assistant_msg(r))
             verdict = validate(self.registry, tc.function.name, tc.function.arguments)
             res.tool_calls_total += 1
             res.valid_names += verdict.valid_name
@@ -270,6 +274,14 @@ class AgentLoop:
         trace.log("assemble", op="history_trim", context={"budget": AGENT_PREFILL_BUDGET, "used": total()})
 
     # ── 헬퍼 ─────────────────────────────────────────────────────────────
+    def _push(self, messages: list[dict[str, Any]], msg: dict[str, Any]) -> None:
+        """이력에 추가하며 메시지 전문을 트레이스에 남긴다 — 런의 대화 맥락 복원용."""
+        messages.append(msg)
+        fields: dict[str, Any] = {"role": msg["role"], "content": msg.get("content") or ""}
+        if msg.get("tool_calls"):
+            fields["tool_calls"] = msg["tool_calls"]
+        trace.log("message", **fields)
+
     def _chat(self, messages, res: AgentResult, *, tools: bool = True):
         r = self.client.chat(
             messages,

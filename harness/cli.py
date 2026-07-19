@@ -137,6 +137,24 @@ trace_app = typer.Typer(no_args_is_help=True)
 app.add_typer(trace_app, name="trace", help="트레이스 조회")
 
 
+@app.command()
+def obs(
+    out: str = typer.Option(None, help="출력 경로 (기본: reports/obs.html)"),
+    open_browser: bool = typer.Option(False, "--open", help="생성 후 브라우저로 열기"),
+) -> None:
+    """옵저버빌리티 UI 생성: 전체 런(sqlite+트레이스)을 단일 HTML로."""
+    from pathlib import Path
+
+    from harness.obs.report_html import build
+
+    path = build(Path(out) if out else None)
+    console.print(f"[green]생성:[/green] {path}")
+    if open_browser:
+        import webbrowser
+
+        webbrowser.open(path.as_uri())
+
+
 @trace_app.command("view")
 def trace_view(run_id: str = typer.Argument(None, help="런 id (생략 시 최신)")) -> None:
     """런 타임라인: 스텝별 지연·토큰·툴 유효성. LLM 지연 비중이 큰 스텝 하이라이트."""
