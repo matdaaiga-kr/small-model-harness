@@ -20,3 +20,25 @@ experiments:
       +evidence: { validator: true, retry: true, guardrails: true, evidence_check: true }
     tasks: [q-101, q-102, q-103, q-107, q-108, q-109, q-110, q-111]
     repeats: 3
+
+  # ── 재실행 라운드 (2026-07-19) — 메시지 전문 로깅 도입 후, 모든 런의 대화
+  # 원문(프롬프트·툴 결과·중간 답변)이 트레이스에 남는 버전으로 재측정.
+  # 공식 수치는 원 실험 리포트를 기준으로 유지하고, r2는 원문 추적 + 재현성
+  # 확인용. 주의: 원 M3 이후 read_page 대소문자 무시(lab-notes/004)와 q-101
+  # 채점 그룹 보정이 반영된 코드라 m3 원 결과와 수치가 다를 수 있다.
+  m3-validity-r2:
+    configs:
+      baseline:   { validator: false, retry: false, guardrails: false }
+      +validator: { validator: true,  retry: false, guardrails: false }
+      +retry:     { validator: true,  retry: true,  guardrails: false }
+      full:       { validator: true,  retry: true,  guardrails: true }
+    tasks: [q-001, q-008, q-014, q-020, q-101, q-102, q-103, q-104, q-105, q-106]
+    repeats: 1
+
+  m4-planner-r2:
+    configs:
+      control:   { validator: true, retry: true, guardrails: true }
+      +planner:  { validator: true, retry: true, guardrails: true, planner_prompt: true }
+      +evidence: { validator: true, retry: true, guardrails: true, evidence_check: true }
+    tasks: [q-101, q-102, q-103, q-107, q-108, q-109, q-110, q-111]
+    repeats: 3
