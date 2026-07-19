@@ -16,8 +16,11 @@ from harness import config
 
 class Expect(BaseModel):
     pages: list[str] = []
+    # 멀티홉 채점: 그룹마다 동의 페이지 목록 — 각 그룹에서 최소 1개가 답변에 인용돼야 성공.
+    # (lab-notes/004: 단일 정답 페이지 강제는 동의 페이지를 오답 처리했다)
+    page_groups: list[list[str]] = []
     must_cite: bool = True
-    require_all: bool = False   # True면 모든 기대 페이지가 답변에 있어야 성공 (멀티홉)
+    require_all: bool = False   # page_groups가 없을 때만 사용 (레거시)
     rubric: str = ""
 
 

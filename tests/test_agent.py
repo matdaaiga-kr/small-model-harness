@@ -157,3 +157,78 @@ def test_step_cap_forces_fallback():
     assert r.fallback and r.answer == "폴백 답"
     # 폴백 호출은 툴 없이 이뤄져야 한다
     assert client.calls[-1]["kwargs" if False else "tools"] is None
+
+
+# ── M4 개입: planner prompt / evidence check ────────────────────────────
+
+def test_planner_prompt_appended():
+    toggles = HarnessToggles(planner_prompt=True)
+    client = FakeClient([FakeResult(content="답 [[페이지]]")])
+    AgentLoop(make_registry(), toggles, client=client).run("과제")
+    system = client.calls[0]["messages"][0]["content"]
+    assert "각 대상마다" in system
+
+
+def test_evidence_check_bounces_unread_citation():
+    reg = make_registry()
+    toggles = HarnessToggles(evidence_check=True)
+    client = FakeClient([
+        FakeResult(content="답이다 [[정글-pintos]]"),      # 인용은 있는데 안 읽음 → 반려
+        FakeResult(content="확인했다 [[정글-pintos]]"),     # 반려 1회 소진 후 수용
+    ])
+    r = AgentLoop(reg, toggles, client=client).run("과제")
+    assert r.evidence_bounces == 1
+    assert r.answer.startswith("확인했다")
+    bounce_msg = client.calls[1]["messages"][-1]
+    assert bounce_msg["role"] == "user" and "read_page" in bounce_msg["content"]
+
+
+def test_evidence_check_passes_after_read(tmp_path):
+    from pydantic import BaseModel, Field
+
+    class ReadArgs(BaseModel):
+        name: str = Field(description="페이지명")
+
+    reg = ToolRegistry()
+    reg.register("read_page", "읽기", ReadArgs, lambda name: f"{name} 내용")
+    toggles = HarnessToggles(evidence_check=True)
+    client = FakeClient([
+        FakeResult(tool_calls=[tool_call("read_page", '{"name": "정글-pintos"}')]),
+        FakeResult(content="읽고 답한다 [[정글-pintos]]"),   # 읽은 페이지 인용 → 통과
+    ])
+    r = AgentLoop(reg, toggles, client=client).run("과제")
+    assert r.evidence_bounces == 0
+    assert r.answer.startswith("읽고")
+
+
+def test_evidence_check_off_by_default():
+    client = FakeClient([FakeResult(content="스니펫만 보고 답 [[아무페이지]]")])
+    r = AgentLoop(make_registry(), client=client).run("과제")
+    assert r.evidence_bounces == 0 and r.answer.startswith("스니펫")
+
+
+# ── 채점기 (lab-notes/004 회귀 방지) ───────────────────────────────────
+
+def test_task_success_casefold_and_groups():
+    from harness.eval.ablation import task_success
+    from harness.eval.suite import Expect, Task
+    from harness.agent.loop import AgentResult
+
+    task = Task(
+        id="t", question="q", kind="qa",
+        expect=Expect(
+            pages=["코멘토-gas-교육효과-대시보드", "코멘토-mcp-캘린더-대량메일"],
+            # 주의: 그룹 동의 페이지에 다른 기대 페이지명의 부분 문자열이 되는
+            # 짧은 이름(예: "코멘토")을 넣으면 substring 채점이 오탐한다
+            page_groups=[
+                ["코멘토-gas-교육효과-대시보드"],
+                ["코멘토-mcp-캘린더-대량메일", "코멘토-mcp-자동화"],
+            ],
+        ),
+    )
+    # 대문자 표기 + 동의 페이지 인용 → 성공이어야 한다
+    r = AgentResult(answer="[[코멘토-GAS-교육효과-대시보드]]와 [[코멘토-MCP-자동화]] 참고")
+    assert task_success(task, r)
+    # 한 그룹이라도 빠지면 실패
+    r2 = AgentResult(answer="[[코멘토-GAS-교육효과-대시보드]]만 언급")
+    assert not task_success(task, r2)

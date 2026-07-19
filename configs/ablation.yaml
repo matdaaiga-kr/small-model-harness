@@ -1,13 +1,22 @@
-# A/B 매트릭스 (docs/03) — M3: 모듈을 하나씩 켜며 스위트 실행
-configs:
-  baseline:   { validator: false, retry: false, guardrails: false }
-  +validator: { validator: true,  retry: false, guardrails: false }
-  +retry:     { validator: true,  retry: true,  guardrails: false }
-  full:       { validator: true,  retry: true,  guardrails: true }
+# A/B 실험 정의 (docs/03). `harness eval ablation --exp <이름>`으로 실행.
+experiments:
 
-# 에이전트 모드로 돌릴 태스크 (suite.yaml의 id)
-# 단일홉 4개(대조군) + 멀티홉 3개 + 함정 3개 — 1차 실험(전 태스크 단일홉)에서
-# 전 설정 100% 동률이 나와, 하네스를 실제로 발동시키는 압박 태스크를 추가함
-agent_tasks: [q-001, q-008, q-014, q-020, q-101, q-102, q-103, q-104, q-105, q-106]
+  # M3 (완료·기록: lab-notes/003) — 유효율 사다리. 72런 전 설정 100%로 null result.
+  m3-validity:
+    configs:
+      baseline:   { validator: false, retry: false, guardrails: false }
+      +validator: { validator: true,  retry: false, guardrails: false }
+      +retry:     { validator: true,  retry: true,  guardrails: false }
+      full:       { validator: true,  retry: true,  guardrails: true }
+    tasks: [q-001, q-008, q-014, q-020, q-101, q-102, q-103, q-104, q-105, q-106]
+    repeats: 1
 
-repeats: 1   # M3는 단계별 변화 관측이 목적. 통계적 반복(3회)은 M4에서.
+  # M4 — 탐색 소극성 공략: 멀티홉 계획 강제 개입 2종의 효과 측정.
+  # 소형 모델 분산 대응으로 3회 반복 (docs/03).
+  m4-planner:
+    configs:
+      control:   { validator: true, retry: true, guardrails: true }
+      +planner:  { validator: true, retry: true, guardrails: true, planner_prompt: true }
+      +evidence: { validator: true, retry: true, guardrails: true, evidence_check: true }
+    tasks: [q-101, q-102, q-103, q-107, q-108, q-109, q-110, q-111]
+    repeats: 3

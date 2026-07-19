@@ -224,19 +224,25 @@ def eval_retrieval_cmd(
 
 
 @eval_app.command("ablation")
-def eval_ablation_cmd() -> None:
-    """A/B 매트릭스: 하네스 모듈을 하나씩 켜며 스위트 실행, 리포트 저장."""
+def eval_ablation_cmd(
+    exp: str = typer.Option("m4-planner", help="configs/ablation.yaml의 실험 이름"),
+    resume: bool = typer.Option(
+        False, "--resume", help="metrics.sqlite에 기록된 런은 건너뛰고 이어서 실행"
+    ),
+) -> None:
+    """A/B 실험 실행: 설정별 스위트 실행, 리포트 저장 + metrics.sqlite 적재."""
     from harness.eval.ablation import run_ablation, write_report
 
     def progress(cfg: str, task_id: str, r) -> None:
         v = f"{r.validity_rate:.0%}" if r.validity_rate is not None else "-"
         console.print(
             f"  [{cfg}] {task_id}: 스텝 {r.steps} 툴콜 {r.tool_calls_total}(유효 {v}) "
-            f"수리 {r.repaired}/{r.retries} 차단 {r.guardrail_blocks}{' 폴백' if r.fallback else ''}"
+            f"수리 {r.repaired}/{r.retries} 차단 {r.guardrail_blocks}"
+            f" 반려 {r.evidence_bounces}{' 폴백' if r.fallback else ''}"
         )
 
-    stats = run_ablation(on_progress=progress)
-    path = write_report(stats)
+    stats = run_ablation(exp, resume=resume, on_progress=progress)
+    path = write_report(exp, stats)
     console.print(f"\n[green]리포트 저장:[/green] {path}")
     for s in stats:
         m = s.summary()

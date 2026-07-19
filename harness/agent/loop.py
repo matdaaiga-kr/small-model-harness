@@ -29,12 +29,23 @@ SYSTEM_PROMPT = """당신은 개인 지식 위키를 탐색해 질문에 답하�
 
 GUARDRAIL_PROMPT_LINE = "\n- 실패한 툴 콜을 절대 같은 인자로 반복하지 말라. 실패하면 다른 툴이나 다른 인자를 시도하라."
 
+# M4 개입 A — 계획 강제 프롬프트 (lab-notes/003: 조기 답변 공략)
+PLANNER_PROMPT_LINE = (
+    "\n- 질문이 여러 대상을 비교하거나 열거하면, 각 대상마다 search_wiki 또는 read_page로"
+    " 근거를 확인한 뒤에 답하라. 검색 스니펫만 보고 답을 완성하지 말고,"
+    " 답에 인용할 페이지는 read_page로 읽어라."
+)
+
+MAX_EVIDENCE_BOUNCES = 1  # M4 개입 B — 근거 미확인 답변 반려 상한
+
 
 @dataclass
 class HarnessToggles:
     validator: bool = True
     retry: bool = True
     guardrails: bool = True
+    planner_prompt: bool = False    # 개입 A: 프롬프트 한 줄
+    evidence_check: bool = False    # 개입 B: 인용 페이지를 read_page로 안 읽었으면 반려
 
 
 @dataclass
@@ -47,6 +58,7 @@ class AgentResult:
     retries: int = 0            # 수리 요청 횟수
     repaired: int = 0           # 수리로 유효해진 호출 수
     guardrail_blocks: int = 0
+    evidence_bounces: int = 0   # 근거 미확인으로 답변이 반려된 횟수
     fallback: bool = False      # 스텝 상한/수리 상한으로 강제 종료
     prompt_tokens: int = 0
     completion_tokens: int = 0
@@ -73,7 +85,11 @@ class AgentLoop:
 
     # ── 메인 루프 ────────────────────────────────────────────────────────
     def run(self, task: str) -> AgentResult:
-        system = SYSTEM_PROMPT + (GUARDRAIL_PROMPT_LINE if self.t.guardrails else "")
+        system = SYSTEM_PROMPT
+        if self.t.guardrails:
+            system += GUARDRAIL_PROMPT_LINE
+        if self.t.planner_prompt:
+            system += PLANNER_PROMPT_LINE
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": system},
             {"role": "user", "content": task},
@@ -81,12 +97,18 @@ class AgentLoop:
         res = AgentResult(answer="")
         seen_calls: dict[str, str] = {}   # 실행한 (툴+인자) → 결과 요약 (가드레일용)
         failed_calls: set[str] = set()
+        self._read_pages: set[str] = set()  # read_page로 실제 읽은 페이지 (evidence용)
 
         for step in range(config.MAX_STEPS):
             self._enforce_budget(messages)
             r = self._chat(messages, res)
 
             if not r.tool_calls:
+                bounce = self._evidence_bounce(r.content, res)
+                if bounce is not None:
+                    messages.append({"role": "assistant", "content": r.content})
+                    messages.append({"role": "user", "content": bounce})
+                    continue
                 res.answer = r.content.strip()
                 res.steps = step + 1
                 return res
@@ -166,6 +188,9 @@ class AgentLoop:
             self._log_step(name, verdict, retries_used)
             return f"툴 실행 오류: {type(e).__name__}: {e}"
 
+        if exec_name == "read_page" and exec_args and not output.startswith("오류"):
+            self._read_pages.add(exec_args["name"].casefold())
+
         output = self._truncate(output)
         seen_calls[key] = output
         self._log_step(name, verdict, retries_used)
@@ -198,6 +223,29 @@ class AgentLoop:
         if verdict.ok:
             res.repaired += 1
         return verdict, retries
+
+    # ── EvidenceCheck: 인용 페이지를 read_page로 안 읽었으면 답변 반려 ──
+    def _evidence_bounce(self, answer: str, res: AgentResult) -> str | None:
+        """반려 사유 메시지를 반환, 통과면 None. 반려는 최대 1회 — 루프 방지."""
+        if not self.t.evidence_check or res.evidence_bounces >= MAX_EVIDENCE_BOUNCES:
+            return None
+        from harness.ingest.loader import extract_links
+
+        cited = extract_links(answer)
+        unread = [p for p in cited if p.casefold() not in self._read_pages]
+        if cited and not unread:
+            return None
+        res.evidence_bounces += 1
+        trace.log("tool_call", guardrail={"evidence_bounced": True}, unread=unread)
+        if not cited:
+            return (
+                "답변에 인용([[페이지명]])이 없다. 근거 페이지를 read_page로 확인하고 "
+                "인용을 포함해 다시 답하라. 위키에 없는 내용이면 없다고 답하라."
+            )
+        return (
+            f"답변에 인용한 {', '.join(f'[[{p}]]' for p in unread)}를 아직 read_page로 "
+            "읽지 않았다. 해당 페이지를 읽어 내용을 확인한 뒤 다시 답하라."
+        )
 
     # ── ContextBudget: 툴 결과 절단 + 오래된 툴 결과 축약 ────────────────
     def _truncate(self, text: str) -> str:

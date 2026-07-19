@@ -57,8 +57,12 @@ def search_wiki(query: str) -> str:
 
 def read_page(name: str) -> str:
     files = _page_files()
+    # 대소문자 무시 조회 — 모델은 페이지명 표기를 자주 바꾼다 (lab-notes/004)
     if name not in files:
-        close = [p for p in files if name.lower() in p.lower()][:5]
+        folded = {p.casefold(): p for p in files}
+        name = folded.get(name.casefold(), name)
+    if name not in files:
+        close = [p for p in files if name.casefold() in p.casefold()][:5]
         hint = f" 비슷한 페이지: {', '.join(close)}" if close else ""
         return f"오류: '{name}' 페이지가 없다.{hint}"
     return files[name].read_text(encoding="utf-8")

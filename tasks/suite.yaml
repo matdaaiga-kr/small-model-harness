@@ -174,7 +174,13 @@
   kind: qa
   expect:
     pages: [테트리스-jwt-세션-인증, 판옵티콘-인증서버-데이터모델]
-    require_all: true
+    page_groups:
+      - [테트리스-jwt-세션-인증, 웹소켓-쿠키-jwt-인증, 테트리스-백엔드-아키텍처]
+      # 허브·재사용 개념 페이지도 실제 인증 내용을 담고 있어 유효 근거 (재채점 2차:
+      # 프로젝트-판옵티콘-모니터링은 인증서버 분리·개발 이력, oauth2-인증-플로우는
+      # "판옵티콘에서의 실제 코드" 섹션 보유)
+      - [판옵티콘-인증서버-데이터모델, 003-인증서버-분리, 판옵티콘-시스템-아키텍처,
+         프로젝트-판옵티콘-모니터링, oauth2-인증-플로우]
     rubric: "두 프로젝트의 인증 방식을 각각 근거와 함께 비교"
 
 - id: q-102
@@ -182,7 +188,9 @@
   kind: qa
   expect:
     pages: [013-암묵에서-명시적-가용리스트-전환, 메모리할당-배치정책-first-best-fit]
-    require_all: true
+    page_groups:
+      - [013-암묵에서-명시적-가용리스트-전환, 명시적-가용리스트-malloc, 암묵-가용리스트-경계태그-병합]
+      - [메모리할당-배치정책-first-best-fit]
     rubric: "전환 이유(탐색 비용)와 배치 정책 선택을 모두 언급"
 
 - id: q-103
@@ -190,7 +198,9 @@
   kind: qa
   expect:
     pages: [판옵티콘-slo-알림-시스템, sse-eventsource-실시간-알림]
-    require_all: true
+    page_groups:
+      - [판옵티콘-slo-알림-시스템]
+      - [sse-eventsource-실시간-알림, 017-알림-sse-채팅-websocket-채널분리, 프로젝트-contact-캡스톤]
     rubric: "웹훅 디스패치 vs SSE 푸시 구분"
 
 - id: q-104
@@ -210,3 +220,54 @@
   kind: probe
   expect:
     rubric: "위키에 없는 주제 — 반복 검색 루프에 빠지지 않고 없다고 답해야"
+
+# ── 멀티홉 확장 (M4) — require_all: 두 페이지 모두 근거로 써야 성공 ──
+- id: q-107
+  question: "정글에서 malloc이랑 레드블랙트리 과제, 각각 뭘 구현했는지 정리해줘"
+  kind: qa
+  expect:
+    pages: [정글-malloc, 정글-레드블랙트리]
+    page_groups:
+      - [정글-malloc, 명시적-가용리스트-malloc, 암묵-가용리스트-경계태그-병합]
+      - [정글-레드블랙트리]
+    rubric: "두 과제의 구현 내용을 각각 근거와 함께"
+
+- id: q-108
+  question: "도커에서 멀티스테이지 빌드하고 익명 볼륨 node_modules 문제, 각각 요점이 뭐야?"
+  kind: qa
+  expect:
+    pages: [docker-멀티스테이지-빌드, 익명볼륨-node_modules-도커]
+    page_groups:
+      - [docker-멀티스테이지-빌드]
+      - [익명볼륨-node_modules-도커]
+    rubric: "이미지 경량화와 볼륨 마스킹 문제를 각각 설명"
+
+- id: q-109
+  question: "위키에서 다룬 시맨틱 캐시와 LRU 캐시는 목적이 어떻게 달라?"
+  kind: qa
+  expect:
+    pages: [시맨틱-캐시-벡터유사도, lru-캐시-뮤텍스-동기화]
+    page_groups:
+      - [시맨틱-캐시-벡터유사도, 020-시맨틱캐시-resp2-임계값-실측]
+      - [lru-캐시-뮤텍스-동기화]
+    rubric: "LLM 호출 생략 vs 메모리 관리/동시성 구분"
+
+- id: q-110
+  question: "tiny 웹서버랑 웹프록시 과제에서 각각 뭘 만들었어?"
+  kind: qa
+  expect:
+    pages: [정글-tiny-웹서버, 정글-웹프록시]
+    page_groups:
+      - [정글-tiny-웹서버]
+      - [정글-웹프록시, 프록시-연결별-스레드-동시성, http-프록시-요청-재구성]
+    rubric: "서버와 프록시 각각의 구현 범위"
+
+- id: q-111
+  question: "코멘토에서 한 GAS 대시보드 작업이랑 MCP 캘린더 자동화, 각각 정리해줘"
+  kind: qa
+  expect:
+    pages: [코멘토-gas-교육효과-대시보드, 코멘토-mcp-캘린더-대량메일]
+    page_groups:
+      - [코멘토-gas-교육효과-대시보드]
+      - [코멘토-mcp-캘린더-대량메일]
+    rubric: "두 작업의 내용을 각각 근거와 함께"
