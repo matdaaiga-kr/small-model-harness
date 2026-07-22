@@ -2,6 +2,7 @@
 
 실험 → 설정 → 태스크 → 런 → 스텝(이벤트/메시지)으로 드릴다운한다.
 외부 의존성 없는 단일 파일 산출물 — 브라우저로 열면 끝.
+LLM 용어를 모르는 사람도 읽을 수 있게 용어 사전·툴팁·도움말을 내장한다.
 """
 
 from __future__ import annotations
@@ -88,48 +89,69 @@ def collect() -> dict:
 
 _HTML = """<!doctype html>
 <html lang="ko"><head><meta charset="utf-8">
-<title>harness obs</title>
+<title>하네스 실험 뷰어</title>
 <style>
   :root { --bg:#fff; --fg:#1a1a1a; --mut:#777; --line:#e3e3e3; --card:#f7f7f8;
-          --ok:#0a7f3f; --bad:#c0392b; --acc:#2456d6; --warn:#b26a00; }
+          --ok:#0a7f3f; --bad:#c0392b; --acc:#2456d6; --warn:#b26a00; --fs:14px; }
   @media (prefers-color-scheme: dark) {
     :root { --bg:#16181d; --fg:#e6e6e6; --mut:#9aa; --line:#31353d; --card:#1f2229;
             --ok:#4cc38a; --bad:#e5735f; --acc:#7aa2ff; --warn:#e0a95c; } }
   * { box-sizing:border-box; }
-  body { margin:0; font:14px/1.5 -apple-system,'Apple SD Gothic Neo',sans-serif;
+  body { margin:0; font:var(--fs)/1.6 -apple-system,'Apple SD Gothic Neo',sans-serif;
          background:var(--bg); color:var(--fg);
          display:flex; flex-direction:column; height:100vh; }
   header { padding:12px 20px; border-bottom:1px solid var(--line);
-           display:flex; gap:16px; align-items:baseline; flex-wrap:wrap; flex:none; }
-  header h1 { font-size:17px; margin:0; }
-  header .sub { color:var(--mut); font-size:12px; }
-  header kbd { background:var(--card); border:1px solid var(--line); border-radius:4px;
-               padding:0 5px; font-size:11px; }
-  .filters { padding:8px 20px; display:flex; gap:8px; flex-wrap:wrap;
+           display:flex; gap:14px; align-items:center; flex-wrap:wrap; flex:none; }
+  header h1 { font-size:1.2em; margin:0; }
+  header .sub { color:var(--mut); font-size:.86em; margin-right:auto; }
+  header button { background:var(--card); color:var(--fg); border:1px solid var(--line);
+    border-radius:6px; padding:4px 11px; font-size:.9em; cursor:pointer; }
+  header button:hover { border-color:var(--acc); color:var(--acc); }
+  .filters { padding:9px 20px; display:flex; gap:8px; flex-wrap:wrap;
              border-bottom:1px solid var(--line); align-items:center; flex:none; }
   select,input[type=text] { background:var(--card); color:var(--fg);
-    border:1px solid var(--line); border-radius:6px; padding:5px 8px; font-size:13px; }
+    border:1px solid var(--line); border-radius:6px; padding:5px 8px; font-size:.93em; }
   #fReset { background:none; border:none; color:var(--acc); cursor:pointer;
-            font-size:12.5px; padding:4px; }
+            font-size:.9em; padding:4px; }
+  /* ── 도움말 ───────────────────────────────────────────────── */
+  dialog { max-width:760px; width:calc(100vw - 48px); max-height:84vh;
+    border:1px solid var(--line); border-radius:12px; background:var(--bg);
+    color:var(--fg); padding:24px 28px; font-size:var(--fs); line-height:1.65; }
+  dialog::backdrop { background:rgba(0,0,0,.45); }
+  dialog h2 { font-size:1.15em; margin:0 0 10px; }
+  dialog h3 { font-size:1em; margin:20px 0 6px; }
+  dialog p { margin:6px 0; }
+  dialog dl { margin:4px 0; }
+  dialog dt { font-weight:700; margin-top:9px; }
+  dialog dd { margin:1px 0 0 0; color:var(--mut); }
+  dialog .close { float:right; }
+  .ladder-step { display:flex; gap:10px; margin:5px 0; align-items:baseline; }
+  .ladder-step b { flex:none; width:96px; text-align:right; color:var(--acc); }
+  .ladder-step span { color:var(--mut); }
   /* ── 대시보드 ─────────────────────────────────────────────── */
-  #dash { border-bottom:1px solid var(--line); flex:none; max-height:44vh; overflow:auto; }
-  #dash > summary { cursor:pointer; padding:8px 20px; font-size:12.5px;
+  #dash { border-bottom:1px solid var(--line); flex:none; max-height:48vh; overflow:auto; }
+  #dash > summary { cursor:pointer; padding:9px 20px; font-size:.9em;
                     color:var(--mut); user-select:none; }
-  #dashBody { display:flex; gap:28px; flex-wrap:wrap; padding:4px 20px 14px; }
-  .exp-block h3 { font-size:13px; margin:8px 0 6px; }
-  .exp-block h3 .mut { font-weight:400; }
-  .barrow { display:flex; align-items:center; gap:8px; margin:3px 0; cursor:pointer;
-            font-size:12.5px; }
+  #dashHint { padding:0 20px 6px; color:var(--mut); font-size:.86em; }
+  #dashBody { display:flex; gap:14px; flex-wrap:wrap; padding:0 20px 16px;
+              align-items:flex-start; }
+  .expcard { border:1px solid var(--line); border-radius:10px; background:var(--bg); }
+  .expcard > summary { cursor:pointer; padding:9px 14px; user-select:none;
+    font-size:.95em; white-space:nowrap; }
+  .expcard > summary .mut { font-size:.9em; }
+  .cardbody { padding:2px 14px 13px; }
+  .barrow { display:flex; align-items:center; gap:8px; margin:4px 0; cursor:pointer;
+            font-size:.9em; }
   .barrow:hover .blabel { color:var(--acc); }
-  .blabel { width:86px; text-align:right; flex:none;
-            overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .btrack { width:180px; height:13px; background:var(--card); border-radius:3px;
+  .blabel { width:88px; text-align:right; flex:none; border-bottom:1px dotted var(--mut);
+            overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:help; }
+  .btrack { width:190px; height:13px; background:var(--card); border-radius:3px;
             flex:none; overflow:hidden; }
   .bfill { display:block; height:100%; background:var(--acc); }
   .bfill.hi { background:var(--ok); } .bfill.lo { background:var(--bad); }
   .bfill.mid { background:var(--warn); }
-  .bval { color:var(--mut); font-size:12px; white-space:nowrap; }
-  table.matrix { border-collapse:collapse; font-size:11.5px; margin-top:8px; }
+  .bval { color:var(--mut); font-size:.88em; white-space:nowrap; }
+  table.matrix { border-collapse:collapse; font-size:.84em; margin-top:10px; }
   table.matrix th, table.matrix td { border:1px solid var(--line); padding:3px 7px;
     text-align:center; white-space:nowrap; }
   table.matrix th { color:var(--mut); font-weight:600; background:var(--bg); }
@@ -141,74 +163,159 @@ _HTML = """<!doctype html>
   .c0   { background:color-mix(in srgb, var(--bad) 32%, var(--bg)); }
   /* ── 리스트 / 상세 ────────────────────────────────────────── */
   main { display:flex; flex:1; min-height:0; }
-  #list { width:44%; min-width:400px; overflow:auto; border-right:1px solid var(--line); }
-  #detail { flex:1; overflow:auto; padding:0 22px 24px; }
-  table.runs { border-collapse:collapse; width:100%; font-size:12.5px; }
-  table.runs th, table.runs td { padding:5px 8px; text-align:left;
+  #list { width:44%; min-width:280px; overflow:auto; }
+  #split { flex:none; width:6px; cursor:col-resize; background:var(--line);
+           opacity:.55; }
+  #split:hover { background:var(--acc); opacity:1; }
+  #detail { flex:1; min-width:280px; overflow:auto; padding:0 22px 28px; }
+  .dwrap { max-width:940px; }
+  table.runs { border-collapse:collapse; width:100%; font-size:.9em; }
+  table.runs th, table.runs td { padding:6px 8px; text-align:left;
     border-bottom:1px solid var(--line); white-space:nowrap; }
   table.runs th { position:sticky; top:0; background:var(--bg); color:var(--mut);
-    font-weight:600; font-size:11.5px; cursor:pointer; user-select:none; z-index:1; }
+    font-weight:600; font-size:.86em; cursor:pointer; user-select:none; z-index:1; }
+  table.runs th[title] { text-decoration:underline dotted; text-underline-offset:3px; }
   table.runs th:hover { color:var(--acc); }
   table.runs tbody tr { cursor:pointer; }
   table.runs tbody tr:hover { background:var(--card); }
   table.runs tbody tr.sel { background:color-mix(in srgb, var(--acc) 14%, var(--bg)); }
   .ok { color:var(--ok); font-weight:700; } .bad { color:var(--bad); font-weight:700; }
-  .tag { display:inline-block; font-size:11px; border:1px solid var(--line);
+  .tag { display:inline-block; font-size:.8em; border:1px solid var(--line);
          border-radius:4px; padding:0 5px; background:var(--card); color:var(--mut); }
-  .dhead { position:sticky; top:0; background:var(--bg); padding:14px 0 8px;
+  .dhead { position:sticky; top:0; background:var(--bg); padding:16px 0 10px;
            border-bottom:1px solid var(--line); z-index:2; }
-  .dhead h2 { font-size:14.5px; margin:0 0 6px; word-break:break-all; }
+  .dhead h2 { font-size:1.05em; margin:0 0 3px; word-break:break-all; }
+  .cfgdesc { color:var(--mut); font-size:.9em; margin:0 0 8px; }
   .chip { display:inline-block; background:var(--card); border:1px solid var(--line);
-          border-radius:20px; padding:2px 10px; margin:2px 4px 2px 0; font-size:12px; }
+          border-radius:20px; padding:2px 10px; margin:2px 5px 2px 0; font-size:.86em; }
+  .chip[title] { cursor:help; }
   .chip.good { border-color:var(--ok); color:var(--ok); }
   .chip.fail { border-color:var(--bad); color:var(--bad); }
   .grp { display:inline-block; border-radius:6px; padding:3px 9px; margin:3px 5px 3px 0;
-         font-size:12px; border:1px solid; }
+         font-size:.88em; border:1px solid; }
   .grp.hit { border-color:var(--ok); background:color-mix(in srgb, var(--ok) 10%, var(--bg)); }
   .grp.miss { border-color:var(--bad); background:color-mix(in srgb, var(--bad) 10%, var(--bg)); }
+  .note { color:var(--mut); font-size:.88em; margin:3px 0 7px; }
   .q { background:var(--card); border-left:3px solid var(--acc); padding:10px 12px;
-       border-radius:6px; margin:10px 0; }
+       border-radius:6px; margin:12px 0; }
   .answer { white-space:pre-wrap; background:var(--card); padding:12px;
             border-radius:8px; margin:8px 0; word-break:break-word; }
   .cite { color:var(--acc); font-weight:600; }
-  .ev { border:1px solid var(--line); border-radius:8px; margin:8px 0; overflow:hidden; }
-  .ev .h { padding:5px 10px; background:var(--card); font-size:12px; color:var(--mut);
+  .ev { border:1px solid var(--line); border-radius:8px; margin:10px 0; overflow:hidden; }
+  .ev .h { padding:6px 10px; background:var(--card); font-size:.86em; color:var(--mut);
            display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
-  .ev .b { padding:8px 10px; white-space:pre-wrap; font-size:12.5px;
+  .ev .b { padding:9px 11px; white-space:pre-wrap; font-size:.92em;
            overflow-x:auto; word-break:break-word; }
-  .ev details.fold > summary { padding:6px 10px; font-size:12px; color:var(--acc);
+  .ev details.fold > summary { padding:6px 10px; font-size:.86em; color:var(--acc);
     cursor:pointer; user-select:none; }
   .role-user { border-left:3px solid var(--acc); }
   .role-assistant { border-left:3px solid var(--ok); }
   .role-tool { border-left:3px solid var(--warn); }
   .role-system { border-left:3px solid var(--mut); }
-  .phase { font-weight:700; color:var(--fg); }
+  .phase { font-weight:700; color:var(--fg); cursor:help;
+           text-decoration:underline dotted; text-underline-offset:3px; }
   .bar { display:inline-block; height:8px; background:var(--acc); border-radius:2px;
          vertical-align:middle; }
-  h3 { font-size:13px; margin:16px 0 4px; }
+  h3 { font-size:.95em; margin:18px 0 4px; }
   .mut { color:var(--mut); }
 </style></head><body>
-<header><h1>harness observability</h1>
-  <span class="sub">생성 __GENERATED__ · 표시 <span id="nRuns"></span> / 전체
-    <span id="nAll"></span>런 · <kbd>↑</kbd><kbd>↓</kbd> 런 이동 ·
-    막대/매트릭스 셀 클릭 = 필터</span></header>
+<header><h1>하네스 실험 뷰어</h1>
+  <span class="sub">생성 __GENERATED__ · 표시 <span id="nRuns"></span> /
+    전체 <span id="nAll"></span>런</span>
+  <button id="fsMinus" title="글자 작게">가−</button>
+  <button id="fsPlus" title="글자 크게">가＋</button>
+  <button id="btnHelp">❓ 도움말 · 용어 사전</button></header>
+
+<dialog id="help">
+  <button class="close" onclick="this.closest('dialog').close()">닫기 ✕</button>
+  <h2>이 화면은 무엇인가요?</h2>
+  <p>내 노트북에서 도는 작은 AI 모델(Qwen3-8B)에게 <b>개인 위키에 관한 질문</b>을
+    시키고, 모델을 돕는 보조 장치인 <b>하네스(harness)</b>를 한 단계씩 붙일 때마다
+    정답률이 어떻게 변하는지 기록한 실험 결과입니다. 위쪽 <b>실험 요약</b>에서
+    큰 그림을 보고, 아래 <b>목록에서 런(실행 1회)을 클릭</b>하면 그때 모델과 실제로
+    오간 대화 전체를 볼 수 있습니다.</p>
+
+  <h3>설정(하네스 사다리) — 아래로 갈수록 장치가 많아집니다</h3>
+  <div class="ladder-step"><b>raw</b><span>생 모델. 위키를 볼 방법이 아예 없이
+    혼자 기억만으로 답함 (책 없이 시험 보기)</span></div>
+  <div class="ladder-step"><b>baseline</b><span>위키 검색·읽기 도구만 줌.
+    보호 장치는 전혀 없음 (책은 주되 감독 없음)</span></div>
+  <div class="ladder-step"><b>+validator</b><span>baseline + 모델의 도구 요청
+    형식이 올바른지 검사</span></div>
+  <div class="ladder-step"><b>+retry</b><span>+validator + 형식이 깨지면
+    고쳐서 재시도</span></div>
+  <div class="ladder-step"><b>full / control</b><span>검사 + 재시도 + 가드레일
+    (같은 검색 반복 차단)까지 전부 켬 — 기본 하네스 완성형</span></div>
+  <div class="ladder-step"><b>+planner</b><span>control + "답하기 전에 먼저
+    계획을 세워라"는 지시를 추가</span></div>
+  <div class="ladder-step"><b>+evidence</b><span>control + 답에 근거 인용이
+    없으면 "다시 써오라"고 돌려보냄</span></div>
+
+  <h3>실험 이름</h3>
+  <dl>
+    <dt>m3-validity</dt><dd>검증 장치(validator·retry·가드레일)를 하나씩 켜며
+      도구 요청 형식이 얼마나 깨지는지 측정. 결과: 전부 100% — 검증이 거의
+      필요 없을 만큼 견고했음</dd>
+    <dt>m4-planner</dt><dd>어려운 질문(여러 페이지를 이어 봐야 답이 나오는
+      멀티홉)에서 "계획 강제" 개입이 도움이 되는지 측정</dd>
+    <dt>m4-floor</dt><dd>사다리 맨 아래 두 칸 측정 — 생 모델(raw)과 도구만 준
+      모델(baseline)이 같은 어려운 질문에서 어디까지 가는지</dd>
+    <dt>…-r2</dt><dd>같은 실험의 재실행. 대화 원문 전체를 기록하는 버전으로
+      다시 돌린 것 (숫자가 원 실험과 약간 다를 수 있음)</dd>
+  </dl>
+
+  <h3>용어 사전</h3>
+  <dl>
+    <dt>런 (run)</dt><dd>질문 1개를 모델에게 시킨 실행 1회. 같은 질문을 3번
+      반복하기도 함 (작은 모델은 결과가 흔들려서)</dd>
+    <dt>토큰 (token)</dt><dd>모델이 글을 세는 단위. 한글 1~2글자 ≈ 1토큰.
+      많이 쓸수록 느려짐</dd>
+    <dt>왕복 (스텝)</dt><dd>모델을 호출한 횟수. 모델이 "검색해줘"라고 하면
+      결과를 주고 다시 호출하므로 왕복이 늘어남</dd>
+    <dt>도구 요청 (툴콜)</dt><dd>모델이 위키 검색(search_wiki)·페이지 읽기
+      (read_page) 같은 도구를 쓰겠다고 요청한 것</dd>
+    <dt>수리 / 차단 / 반려</dt><dd>하네스의 개입 3종 — 깨진 도구 요청을 고침(수리),
+      같은 검색 반복 등 낭비를 막음(차단), 근거 없는 답을 돌려보냄(반려)</dd>
+    <dt>성공</dt><dd>모델의 답이 기대한 위키 페이지를 [[페이지명]] 형태로
+      인용했는지 자동 채점한 결과</dd>
+    <dt>환각 (hallucination)</dt><dd>모델이 모르는 것을 아는 것처럼 그럴듯하게
+      지어내는 현상. raw 설정의 답이 전형적인 예</dd>
+  </dl>
+
+  <h3>조작법</h3>
+  <p>· 요약의 막대나 표 칸을 클릭 → 아래 목록이 그 조건으로 좁혀집니다<br>
+     · 목록에서 행 클릭 또는 <b>↑↓</b> 키 → 오른쪽에 상세(대화 원문)<br>
+     · 목록과 상세 사이 세로 줄을 드래그 → 폭 조절 (더블클릭 = 원위치)<br>
+     · 오른쪽 위 <b>가− / 가＋</b> → 글자 크기 조절</p>
+</dialog>
+
 <div class="filters">
   <select id="fExp"></select><select id="fCfg"></select><select id="fTask"></select>
   <select id="fOk"><option value="">성공/실패 전체</option>
     <option value="1">성공만</option><option value="0">실패만</option></select>
-  <input type="text" id="fText" placeholder="run_id / mode / 답변 검색">
+  <input type="text" id="fText" placeholder="검색: 답변 내용·run id">
   <button id="fReset">필터 초기화</button>
 </div>
-<details id="dash" open><summary>대시보드 — 성공률 사다리 · 설정 × 태스크 매트릭스</summary>
+<details id="dash" open><summary>📊 실험 요약 (접기/펼치기)</summary>
+  <div id="dashHint">막대 = 성공률 · 표 = 설정×질문별 성공 횟수 —
+    클릭하면 아래 목록이 그 조건으로 좁혀집니다. 실험 카드도 접을 수 있어요.</div>
   <div id="dashBody"></div></details>
 <main>
   <div id="list"><table class="runs"><thead><tr>
-    <th data-k="ts">시각</th><th data-k="exp">실험</th><th data-k="cfg">설정</th>
-    <th data-k="task">task</th><th data-k="ok">성공</th><th data-k="steps">스텝</th>
-    <th data-k="calls">툴콜</th><th data-k="bounce">반려</th><th data-k="tok">토큰</th>
+    <th data-k="ts" title="실행된 시각">시각</th>
+    <th data-k="exp" title="어떤 실험 묶음인지 (도움말 참고)">실험</th>
+    <th data-k="cfg" title="하네스 장치를 어디까지 켰는지 (도움말의 사다리 참고)">설정</th>
+    <th data-k="task" title="모델에게 낸 질문 번호">질문</th>
+    <th data-k="ok" title="기대한 위키 페이지를 인용했는지 자동 채점">성공</th>
+    <th data-k="steps" title="모델을 호출한 횟수 (검색할수록 늘어남)">왕복</th>
+    <th data-k="calls" title="모델이 검색·읽기 도구를 쓰겠다고 요청한 횟수">도구</th>
+    <th data-k="bounce" title="근거 없는 답을 하네스가 돌려보낸 횟수">반려</th>
+    <th data-k="tok" title="모델이 읽고 쓴 글 분량 (한글 1~2자 ≈ 1토큰)">토큰</th>
     </tr></thead>
     <tbody id="rows"></tbody></table></div>
-  <div id="detail"><p class="mut" style="padding-top:14px">왼쪽에서 런을 선택하세요.</p></div>
+  <div id="split" title="드래그로 폭 조절 · 더블클릭 = 원위치"></div>
+  <div id="detail"><p class="mut" style="padding-top:14px">왼쪽 목록에서 런을
+    선택하면 상세와 대화 원문이 여기 표시됩니다.</p></div>
 </main>
 <script type="application/json" id="data">__DATA__</script>
 <script>
@@ -218,10 +325,63 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const short = t => t ? t.replace('T',' ').slice(5,19) : '';
 const tokOf = m => (m.prompt_tokens||0) + (m.completion_tokens||0);
+
+// ── 초보자용 설명 사전 ────────────────────────────────────────
+const CONFIG_DESC = {
+  'raw': '생 모델 — 위키를 볼 방법이 아예 없음 (책 없이 시험 보기)',
+  'baseline': '검색·읽기 도구만 줌 — 보호 장치 없음',
+  '+validator': 'baseline + 도구 요청 형식 검사',
+  '+retry': '+validator + 형식이 깨지면 고쳐서 재시도',
+  'full': '검사·재시도·가드레일 전부 켬 — 기본 하네스 완성형',
+  'control': '검사·재시도·가드레일 전부 켬 — 기본 하네스 완성형 (비교 기준)',
+  '+planner': 'control + "먼저 계획을 세워라" 지시 추가',
+  '+evidence': 'control + 근거 인용 없는 답은 반려',
+  '+conditional': 'control + 문제가 있을 때만 조건부로 반려',
+};
+const EXP_DESC = {
+  'm3-validity': '검증 장치를 하나씩 켜며 도구 요청 형식 오류 측정',
+  'm3-validity-r2': '위 실험의 재실행 (대화 원문 기록 버전)',
+  'm4-planner': '어려운 질문에서 "계획 강제" 개입 효과 측정',
+  'm4-planner-r2': '위 실험의 재실행 (대화 원문 기록 버전)',
+  'm4-floor': '사다리 바닥 — 생 모델 vs 도구만 준 모델',
+};
+const ROLE_KO = {
+  system: ['시스템', '하네스가 모델에게 준 지시문'],
+  user: ['질문·요청', '사용자 질문, 또는 하네스가 끼워 넣은 요청(수리·반려 등)'],
+  assistant: ['모델 출력', '모델(qwen3:8b)이 말한 차례 — 도구 요청 또는 답변'],
+  tool: ['도구 결과', '하네스가 도구를 실제 실행해 모델에게 돌려준 결과'],
+};
+const PHASE_KO = {
+  llm: ['모델 호출', '모델을 1번 호출한 기록 (토큰 수·속도)'],
+  retrieve: ['검색', '위키 검색 실행 기록'],
+  tool_call: ['도구 요청 점검', '모델의 도구 요청이 올바른지 검사한 기록'],
+  assemble: ['컨텍스트 조립', '모델에게 줄 자료를 짜맞춘 기록'],
+};
+
 // 하네스 사다리 순서 — 대시보드에서 설정을 이 순서로 정렬한다
 const LADDER = ['raw','baseline','+validator','+retry','full','control','+planner',
                 '+evidence','+conditional'];
 const rank = c => { const i = LADDER.indexOf(c); return i < 0 ? 99 : i; };
+
+// ── 글자 크기 조절 ────────────────────────────────────────────
+let fs = +(localStorage.getItem('obs-fs') || 14);
+function applyFs() {
+  document.documentElement.style.setProperty('--fs', fs + 'px');
+  localStorage.setItem('obs-fs', fs);
+}
+$('fsMinus').onclick = () => { fs = Math.max(11, fs - 1); applyFs(); };
+$('fsPlus').onclick = () => { fs = Math.min(20, fs + 1); applyFs(); };
+applyFs();
+$('btnHelp').onclick = () => $('help').showModal();
+
+// ── 리스트/상세 폭 조절 스플리터 ──────────────────────────────
+let dragging = false;
+$('split').onmousedown = e => { dragging = true; e.preventDefault(); };
+window.addEventListener('mousemove', e => { if (!dragging) return;
+  const w = Math.min(Math.max(e.clientX, 280), window.innerWidth - 300);
+  $('list').style.width = w + 'px'; });
+window.addEventListener('mouseup', () => dragging = false);
+$('split').ondblclick = () => $('list').style.width = '44%';
 
 function fillSelect(el, counts, label) {
   const keys = Object.keys(counts).sort((a,b) =>
@@ -233,7 +393,7 @@ const cnt = f => runs.reduce((a,r) => { if (r.meta) {
   const k = r.meta[f]; a[k] = (a[k]||0)+1; } return a; }, {});
 fillSelect($('fExp'), cnt('experiment'), '실험');
 fillSelect($('fCfg'), cnt('config'), '설정');
-fillSelect($('fTask'), cnt('task_id'), '태스크');
+fillSelect($('fTask'), cnt('task_id'), '질문');
 $('nAll').textContent = runs.length;
 
 function visible() {
@@ -273,11 +433,18 @@ document.querySelectorAll('table.runs th').forEach(th => th.onclick = () => {
   renderList();
 });
 
-// ── 대시보드: 사다리 바 + 설정×태스크 매트릭스 ────────────────
+// ── 대시보드: 실험 카드(접이식) — 사다리 바 + 설정×질문 매트릭스 ──
 function setFilter(exp, cfg, task) {
   $('fExp').value = exp || ''; $('fCfg').value = cfg || '';
   $('fTask').value = task || ''; renderList();
 }
+// 기본으로 펼쳐 둘 카드: 가장 최근에 실행된 실험 하나
+const openExps = new Set();
+{ let best = '', bestTs = '';
+  runs.forEach(r => { if (r.meta && r.ts > bestTs) {
+    bestTs = r.ts; best = r.meta.experiment; } });
+  if (best) openExps.add(best); }
+
 function renderDash(list) {
   const byExp = {};
   list.forEach(r => { const m = r.meta; if (!m) return;
@@ -286,14 +453,21 @@ function renderDash(list) {
     c.n++; c.ok += m.success; c.tok += tokOf(m);
     const t = c.tasks[m.task_id] = c.tasks[m.task_id] || { n:0, ok:0 };
     t.n++; t.ok += m.success; });
-  $('dashBody').innerHTML = Object.keys(byExp).sort().map(exp => {
+  // 최근 실행 순으로 카드 정렬
+  const lastTs = {};
+  list.forEach(r => { if (r.meta && (!lastTs[r.meta.experiment] ||
+    r.ts > lastTs[r.meta.experiment])) lastTs[r.meta.experiment] = r.ts; });
+  const exps = Object.keys(byExp).sort((a,b) =>
+    (lastTs[b]||'').localeCompare(lastTs[a]||''));
+  $('dashBody').innerHTML = exps.map(exp => {
     const cfgsO = Object.keys(byExp[exp]).sort((a,b) =>
       rank(a)-rank(b) || a.localeCompare(b));
+    const nRuns = cfgsO.reduce((s,c) => s + byExp[exp][c].n, 0);
     const bars = cfgsO.map(cfg => { const s = byExp[exp][cfg];
       const p = Math.round(100*s.ok/s.n);
       const cls = p >= 75 ? 'hi' : p >= 40 ? 'mid' : 'lo';
       return `<div class="barrow" data-exp="${esc(exp)}" data-cfg="${esc(cfg)}">` +
-        `<span class="blabel" title="${esc(cfg)}">${esc(cfg)}</span>` +
+        `<span class="blabel" title="${esc(CONFIG_DESC[cfg] || cfg)}">${esc(cfg)}</span>` +
         `<span class="btrack"><span class="bfill ${cls}" style="width:${p}%"></span></span>` +
         `<span class="bval">${p}% (${s.ok}/${s.n}) · ${
           Math.round(s.tok/s.n).toLocaleString()} tok</span></div>`; }).join('');
@@ -310,11 +484,19 @@ function renderDash(list) {
           const p = 100*s.ok/s.n;
           const cls = p===100?'c100':p>=50?'c66':p>0?'c33':'c0';
           return `<td class="mcell ${cls}" data-exp="${esc(exp)}"` +
-            ` data-cfg="${esc(cfg)}" data-task="${esc(t)}">${s.ok}/${s.n}</td>`;
+            ` data-cfg="${esc(cfg)}" data-task="${esc(t)}" title="${esc(t)} · ${
+            esc(cfg)} · ${s.n}번 중 ${s.ok}번 성공">${s.ok}/${s.n}</td>`;
         }).join('') + `</tr>`).join('') + `</table>`;
     }
-    return `<div class="exp-block"><h3>${esc(exp)}</h3>${bars}${matrix}</div>`;
-  }).join('') || '<p class="mut">표시할 실험 런이 없습니다.</p>';
+    return `<details class="expcard" data-exp="${esc(exp)}"${
+        openExps.has(exp) ? ' open' : ''}>` +
+      `<summary><b>${esc(exp)}</b> <span class="mut">— ${
+        esc(EXP_DESC[exp] || '실험')} · ${nRuns}런</span></summary>` +
+      `<div class="cardbody">${bars}${matrix}</div></details>`;
+  }).join('') || '<p class="mut" style="padding:0 20px 12px">표시할 실험 런이 없습니다.</p>';
+  document.querySelectorAll('.expcard').forEach(d =>
+    d.addEventListener('toggle', () => {
+      if (d.open) openExps.add(d.dataset.exp); else openExps.delete(d.dataset.exp); }));
   document.querySelectorAll('.barrow').forEach(el => el.onclick = () =>
     setFilter(el.dataset.exp, el.dataset.cfg, ''));
   document.querySelectorAll('.mcell').forEach(el => el.onclick = () =>
@@ -338,8 +520,10 @@ function renderList() {
     return `<tr data-id="${r.run_id}" class="${r.run_id===selId?'sel':''}">` +
       `<td>${short(r.ts)}</td>` +
       `<td>${m ? esc(m.experiment) : `<span class="tag">${esc(r.mode)}</span>`}</td>` +
-      `<td>${m ? esc(m.config) : '·'}</td>` +
-      `<td>${m ? esc(m.task_id) : '·'}</td><td>${okCell}</td>` +
+      `<td${m && CONFIG_DESC[m.config] ? ` title="${esc(CONFIG_DESC[m.config])}"` : ''}>${
+        m ? esc(m.config) : '·'}</td>` +
+      `<td${m && suite[m.task_id] ? ` title="${esc(suite[m.task_id].question)}"` : ''}>${
+        m ? esc(m.task_id) : '·'}</td><td>${okCell}</td>` +
       `<td>${m ? m.steps : r.events.length}</td><td>${m ? m.tool_calls : '·'}</td>` +
       `<td>${m && m.evidence_bounces ? m.evidence_bounces : ''}</td>` +
       `<td>${m ? tokOf(m).toLocaleString() : '·'}</td></tr>`;
@@ -353,14 +537,18 @@ function hlAnswer(text) {
   return esc(text).replace(/\\[\\[([^\\]]+)\\]\\]/g, '<span class="cite">[[$1]]</span>');
 }
 function gradePanel(t, answer) {
-  if (!t || t.kind === 'probe')
-    return t ? '<p class="mut">probe 태스크 — 채점: 환각 툴콜 없음(이름 유효율 100%)</p>' : '';
+  if (!t) return '';
+  if (t.kind === 'probe')
+    return '<h3>채점</h3><p class="note">이 질문은 정답 인용이 아니라 "없는 도구를 ' +
+      '지어내지 않는지"를 검사합니다. 도구 요청 이름이 전부 실제 존재하면 성공.</p>';
   const ans = (answer || '').toLowerCase();
   let groups = t.page_groups && t.page_groups.length ? t.page_groups
     : t.require_all ? (t.pages||[]).map(p => [p])
     : (t.pages && t.pages.length ? [t.pages] : []);
   if (!groups.length) return '';
-  return '<h3>채점 — 그룹마다 1개 이상 인용해야 성공</h3>' + groups.map(g => {
+  return '<h3>채점</h3><p class="note">아래 묶음마다 위키 페이지를 최소 1개 ' +
+    '인용해야 성공입니다. 초록 ✓ = 인용한 페이지, 빨강 ✗ = 하나도 인용 못한 ' +
+    '묶음(후보 나열).</p>' + groups.map(g => {
     const hit = g.find(p => ans.includes(p.toLowerCase()));
     return hit
       ? `<span class="grp hit">✓ ${esc(hit)}</span>`
@@ -375,33 +563,37 @@ function fold(bodyHtml, len, open) {
 }
 function evLine(e, maxLat) {
   const lat = e.latency_ms ? ` · ${e.latency_ms.total.toLocaleString()}ms` : '';
-  const mem = e.mem ? ` · avail ${e.mem.avail_mb}MB` : '';
+  const mem = e.mem ? ` · 여유 메모리 ${e.mem.avail_mb}MB` : '';
   const bar = e.latency_ms && maxLat ? `<span class="bar" style="width:${
     Math.max(2, Math.round(120*e.latency_ms.total/maxLat))}px"></span>` : '';
   if (e.phase === 'message') {
     const tcs = (e.tool_calls || []).map(tc =>
-      `→ ${tc.function.name}(${tc.function.arguments})`).join('\\n');
+      `도구 요청 → ${tc.function.name}(${tc.function.arguments})`).join('\\n');
     const body = [e.content, tcs].filter(Boolean).join('\\n');
+    const rk = ROLE_KO[e.role] || [e.role, ''];
     return `<div class="ev role-${e.role}"><div class="h">` +
-      `<span class="phase">${e.role}${e.final ? ' · 최종 답' : ''}</span>` +
-      `<span>#${e.step}${mem}</span></div>` +
+      `<span class="phase" title="${esc(rk[1])}">${esc(rk[0])}` +
+      `${e.final ? ' · 최종 답변' : ''}</span>` +
+      `<span>${e.step}번째 왕복${mem}</span></div>` +
       fold(e.final ? hlAnswer(body) : esc(body), body.length, e.role !== 'tool') +
       `</div>`;
   }
   let info = '';
-  if (e.phase === 'llm') info = `prompt ${e.tokens?.prompt} · completion ${
-    e.tokens?.completion} · ${e.tok_per_s} tok/s`;
+  if (e.phase === 'llm') info = `읽은 토큰 ${e.tokens?.prompt} · 쓴 토큰 ${
+    e.tokens?.completion} · 속도 ${e.tok_per_s} tok/s`;
   else if (e.phase === 'retrieve') info = `${e.op}${e.hits ? ' → ' +
     e.hits.map(h => h.split('#')[0]).join(', ') : ''}`;
   else if (e.phase === 'tool_call') info = e.tool
-    ? `${e.tool.name} · name ${e.tool.valid_name ? '유효' : '무효'} · args ${
+    ? `${e.tool.name} · 이름 ${e.tool.valid_name ? '유효' : '무효'} · 인자 ${
         e.tool.valid_args ? '유효' : '무효'}` +
-      (e.guardrail?.repeat_blocked ? ' · 반복차단' : '')
+      (e.guardrail?.repeat_blocked ? ' · 반복이라 차단됨' : '')
     : Object.entries(e.guardrail || {}).filter(([,v]) => v).map(([k]) => k).join(',') +
-      (e.unread ? ` · 미확인: ${e.unread.join(', ')}` : '');
+      (e.unread ? ` · 안 읽은 페이지: ${e.unread.join(', ')}` : '');
   else if (e.phase === 'assemble') info = `${e.op} · ${JSON.stringify(e.context)}`;
-  return `<div class="ev"><div class="h"><span class="phase">${e.phase}</span>` +
-    `<span>#${e.step}${lat}${mem}</span>${bar}</div>` +
+  const pk = PHASE_KO[e.phase] || [e.phase, ''];
+  return `<div class="ev"><div class="h"><span class="phase" title="${
+    esc(pk[1])}">${esc(pk[0])}</span>` +
+    `<span>${e.step}번째 왕복${lat}${mem}</span>${bar}</div>` +
     (info ? `<div class="b mut">${esc(info)}</div>` : '') + `</div>`;
 }
 
@@ -412,35 +604,45 @@ function renderDetail() {
   let dur = '';
   if (r.events.length > 1) {
     const s = (new Date(r.events[r.events.length-1].ts) - new Date(r.events[0].ts))/1000;
-    if (s > 0) dur = `<span class="chip">소요 ${s >= 60
+    if (s > 0) dur = `<span class="chip" title="이 런에 걸린 시간">소요 ${s >= 60
       ? Math.floor(s/60)+'분 '+Math.round(s%60)+'초' : s.toFixed(1)+'초'}</span>`;
   }
-  let h = `<div class="dhead"><h2>${esc(r.run_id)}` +
-    ` <span class="mut">· ${esc(r.mode)}</span></h2>`;
+  let h = `<div class="dhead"><h2>${m
+    ? `${esc(m.experiment)} · <span class="cite">${esc(m.config)}</span> · ${
+        esc(m.task_id)}`
+    : esc(r.run_id)} <span class="mut" style="font-weight:400;font-size:.8em">${
+      esc(r.run_id)}</span></h2>`;
+  if (m && CONFIG_DESC[m.config])
+    h += `<p class="cfgdesc">${esc(m.config)} = ${esc(CONFIG_DESC[m.config])}</p>`;
   if (m) {
     h += `<div>` +
-      `<span class="chip ${m.success ? 'good' : 'fail'}">${
-        m.success ? '성공' : '실패'}</span>` + dur +
-      `<span class="chip">스텝 ${m.steps}</span>` +
-      `<span class="chip">툴콜 ${m.tool_calls} (이름 ${m.valid_names}/인자 ${
+      `<span class="chip ${m.success ? 'good' : 'fail'}" title="기대한 위키 페이지를 ` +
+      `인용했는지 자동 채점한 결과">${m.success ? '성공' : '실패'}</span>` + dur +
+      `<span class="chip" title="모델을 호출한 횟수">왕복 ${m.steps}</span>` +
+      `<span class="chip" title="모델이 도구를 쓰겠다고 요청한 횟수와, 그중 형식이 ` +
+      `올바른 개수">도구 요청 ${m.tool_calls}건 (이름 ${m.valid_names}·인자 ${
         m.valid_args} 유효)</span>` +
-      `<span class="chip">수리 ${m.repaired}/${m.retries}</span>` +
-      `<span class="chip">차단 ${m.guardrail_blocks} · 반려 ${m.evidence_bounces}` +
+      `<span class="chip" title="깨진 도구 요청을 하네스가 고친 횟수 / 재시도 횟수">` +
+      `수리 ${m.repaired}/${m.retries}</span>` +
+      `<span class="chip" title="차단 = 반복 검색 등을 막음 · 반려 = 근거 없는 답을 ` +
+      `돌려보냄">차단 ${m.guardrail_blocks} · 반려 ${m.evidence_bounces}` +
       `${m.fallback ? ' · 폴백' : ''}</span>` +
-      `<span class="chip">토큰 ${tokOf(m).toLocaleString()}</span></div>`;
+      `<span class="chip" title="모델이 읽고 쓴 글 분량 (한글 1~2자 ≈ 1토큰)">토큰 ${
+        tokOf(m).toLocaleString()}</span></div>`;
   } else { h += dur; }
-  h += `</div>`;
+  h += `</div><div class="dwrap">`;
   if (m) {
-    if (t) h += `<div class="q"><b>${esc(m.task_id)}</b> (${t.kind}) — ${
-      esc(t.question)}</div>`;
+    if (t) h += `<div class="q"><b>${esc(m.task_id)}</b> — ${esc(t.question)}</div>`;
     h += gradePanel(t, m.answer);
     if (m.answer) h += `<h3>최종 답변</h3><div class="answer">${
       hlAnswer(m.answer)}</div>`;
   }
   const maxLat = Math.max(0, ...r.events.map(e => e.latency_ms?.total || 0));
-  h += `<h3>타임라인 (${r.events.length} 이벤트)</h3>`;
+  h += `<h3>대화 타임라인 <span class="mut" style="font-weight:400">— 모델과 실제로 ` +
+    `오간 순서 그대로 (${r.events.length}건)</span></h3>`;
   h += r.events.length ? r.events.map(e => evLine(e, maxLat)).join('')
-     : '<p class="mut">트레이스 파일 없음 — sqlite 요약만 존재.</p>';
+     : '<p class="mut">대화 기록 파일 없음 — 요약 수치만 남아 있습니다.</p>';
+  h += `</div>`;
   $('detail').innerHTML = h;
   $('detail').scrollTop = 0;
 }
