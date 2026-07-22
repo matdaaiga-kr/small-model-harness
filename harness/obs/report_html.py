@@ -251,17 +251,25 @@ _HTML = """<!doctype html>
   <div class="ladder-step"><b>+evidence</b><span>control + 답에 근거 인용이
     없으면 "다시 써오라"고 돌려보냄</span></div>
 
-  <h3>실험 이름</h3>
+  <h3>실험 이름 읽는 법</h3>
+  <p>이 프로젝트는 단계(마일스톤)를 M1, M2, M3…으로 셉니다. 실험 이름 앞의
+    <b>m3 / m4</b>는 "3단계 / 4단계에서 한 실험"이라는 뜻일 뿐, 모델 이름이
+    아닙니다. 이름 끝의 <b>-r2</b>는 round 2, 즉 <b>같은 실험의 2회차
+    재측정</b>입니다 — 1회차 때는 점수 같은 요약 숫자만 저장했는데, 나중에
+    모델과 오간 대화 원문까지 통째로 기록하도록 프로그램을 고친 뒤 한 번 더
+    돌린 것입니다. 그래서 대화 원문이 보고 싶으면 -r2 쪽 런을 열면 됩니다.</p>
   <dl>
-    <dt>m3-validity</dt><dd>검증 장치(validator·retry·가드레일)를 하나씩 켜며
-      도구 요청 형식이 얼마나 깨지는지 측정. 결과: 전부 100% — 검증이 거의
-      필요 없을 만큼 견고했음</dd>
-    <dt>m4-planner</dt><dd>어려운 질문(여러 페이지를 이어 봐야 답이 나오는
-      멀티홉)에서 "계획 강제" 개입이 도움이 되는지 측정</dd>
-    <dt>m4-floor</dt><dd>사다리 맨 아래 두 칸 측정 — 생 모델(raw)과 도구만 준
-      모델(baseline)이 같은 어려운 질문에서 어디까지 가는지</dd>
-    <dt>…-r2</dt><dd>같은 실험의 재실행. 대화 원문 전체를 기록하는 버전으로
-      다시 돌린 것 (숫자가 원 실험과 약간 다를 수 있음)</dd>
+    <dt>m3-validity — 검증 장치 실험</dt><dd>도구 요청 형식을 검사·수리하는
+      장치(validator·retry·가드레일)를 하나씩 켜며 오류가 줄어드는지 측정.
+      결과: 장치가 없어도 오류가 0이었음 — 검증은 성능 향상이 아니라 보험</dd>
+    <dt>m4-planner — 개입 실험</dt><dd>여러 페이지를 이어 봐야 답이 나오는
+      어려운 질문에서, "먼저 계획을 세워라"(+planner) 같은 적극 개입이 도움이
+      되는지 측정. 결과: 오히려 점수가 떨어질 수 있음</dd>
+    <dt>m4-floor — 바닥 측정</dt><dd>하네스를 아예 안 붙인 밑바닥 두 조건
+      (생 모델 raw, 도구만 준 baseline)을 같은 어려운 질문으로 측정.
+      결과: 검색 도구를 주는 것만으로 0% → 79%</dd>
+    <dt>…-r2 — 2회차 재측정</dt><dd>위 설명대로, 대화 원문까지 기록되는
+      개선판으로 같은 실험을 다시 돌린 것 (숫자가 1회차와 약간 다를 수 있음)</dd>
   </dl>
 
   <h3>용어 사전</h3>
@@ -338,13 +346,31 @@ const CONFIG_DESC = {
   '+evidence': 'control + 근거 인용 없는 답은 반려',
   '+conditional': 'control + 문제가 있을 때만 조건부로 반려',
 };
-const EXP_DESC = {
-  'm3-validity': '검증 장치를 하나씩 켜며 도구 요청 형식 오류 측정',
-  'm3-validity-r2': '위 실험의 재실행 (대화 원문 기록 버전)',
-  'm4-planner': '어려운 질문에서 "계획 강제" 개입 효과 측정',
-  'm4-planner-r2': '위 실험의 재실행 (대화 원문 기록 버전)',
-  'm4-floor': '사다리 바닥 — 생 모델 vs 도구만 준 모델',
+// 실험 코드네임 → [한글 제목, 처음 보는 사람용 설명]
+const EXP_KO = {
+  'm3-validity': ['검증 장치 실험',
+    '도구 요청 형식을 검사·수리하는 장치를 하나씩 켜며 오류가 줄어드는지 측정'],
+  'm3-validity-r2': ['검증 장치 실험 · 2회차 재측정',
+    '같은 실험을 한 번 더 돌린 것 — 1회차엔 요약 숫자만 남아서, 대화 원문까지 ' +
+    '기록되는 개선판으로 재측정 (r2 = round 2)'],
+  'm4-planner': ['개입 실험',
+    '"먼저 계획을 세워라"(+planner), "근거 없으면 반려"(+evidence) 같은 적극 ' +
+    '개입이 어려운 질문에 도움 되는지 측정'],
+  'm4-planner-r2': ['개입 실험 · 2회차 재측정',
+    '같은 실험을 한 번 더 돌린 것 — 대화 원문까지 기록되는 개선판으로 재측정 ' +
+    '(r2 = round 2)'],
+  'm4-floor': ['바닥 측정 — 생 모델 vs 도구만 준 모델',
+    '하네스를 아예 안 붙인 밑바닥 두 조건을 측정 — 검색 도구를 주는 것만으로 ' +
+    '성공률이 0%에서 79%로 오른다'],
 };
+// 좁은 칸(목록·필터)용 축약 이름
+const EXP_SHORT = {
+  'm3-validity': '검증 장치', 'm3-validity-r2': '검증 장치 ②',
+  'm4-planner': '개입', 'm4-planner-r2': '개입 ②', 'm4-floor': '바닥 측정',
+};
+const expTitle = e => EXP_KO[e] ? EXP_KO[e][0] : e;
+const expDesc = e => EXP_KO[e] ? EXP_KO[e][1] : '';
+const expShort = e => EXP_SHORT[e] || e;
 const ROLE_KO = {
   system: ['시스템', '하네스가 모델에게 준 지시문'],
   user: ['질문·요청', '사용자 질문, 또는 하네스가 끼워 넣은 요청(수리·반려 등)'],
@@ -386,8 +412,10 @@ $('split').ondblclick = () => $('list').style.width = '44%';
 function fillSelect(el, counts, label) {
   const keys = Object.keys(counts).sort((a,b) =>
     el.id === 'fCfg' ? (rank(a)-rank(b) || a.localeCompare(b)) : a.localeCompare(b));
+  const disp = el.id === 'fExp' ? expShort : (v => v);
   el.innerHTML = `<option value="">${label} 전체</option>` +
-    keys.map(v => `<option value="${esc(v)}">${esc(v)} (${counts[v]})</option>`).join('');
+    keys.map(v =>
+      `<option value="${esc(v)}">${esc(disp(v))} (${counts[v]})</option>`).join('');
 }
 const cnt = f => runs.reduce((a,r) => { if (r.meta) {
   const k = r.meta[f]; a[k] = (a[k]||0)+1; } return a; }, {});
@@ -488,11 +516,13 @@ function renderDash(list) {
             esc(cfg)} · ${s.n}번 중 ${s.ok}번 성공">${s.ok}/${s.n}</td>`;
         }).join('') + `</tr>`).join('') + `</table>`;
     }
+    const desc = expDesc(exp);
     return `<details class="expcard" data-exp="${esc(exp)}"${
         openExps.has(exp) ? ' open' : ''}>` +
-      `<summary><b>${esc(exp)}</b> <span class="mut">— ${
-        esc(EXP_DESC[exp] || '실험')} · ${nRuns}런</span></summary>` +
-      `<div class="cardbody">${bars}${matrix}</div></details>`;
+      `<summary><b>${esc(expTitle(exp))}</b> <span class="mut">(${esc(exp)}) · ${
+        nRuns}런</span></summary>` +
+      `<div class="cardbody">${desc ? `<p class="note">${esc(desc)}</p>` : ''}${
+        bars}${matrix}</div></details>`;
   }).join('') || '<p class="mut" style="padding:0 20px 12px">표시할 실험 런이 없습니다.</p>';
   document.querySelectorAll('.expcard').forEach(d =>
     d.addEventListener('toggle', () => {
@@ -519,7 +549,9 @@ function renderList() {
                                   : '<span class="bad">X</span>') : '·';
     return `<tr data-id="${r.run_id}" class="${r.run_id===selId?'sel':''}">` +
       `<td>${short(r.ts)}</td>` +
-      `<td>${m ? esc(m.experiment) : `<span class="tag">${esc(r.mode)}</span>`}</td>` +
+      `<td${m ? ` title="${esc(m.experiment)} — ${esc(expDesc(m.experiment))}"` : ''}>${
+        m ? esc(expShort(m.experiment))
+          : `<span class="tag">${esc(r.mode)}</span>`}</td>` +
       `<td${m && CONFIG_DESC[m.config] ? ` title="${esc(CONFIG_DESC[m.config])}"` : ''}>${
         m ? esc(m.config) : '·'}</td>` +
       `<td${m && suite[m.task_id] ? ` title="${esc(suite[m.task_id].question)}"` : ''}>${
@@ -608,12 +640,14 @@ function renderDetail() {
       ? Math.floor(s/60)+'분 '+Math.round(s%60)+'초' : s.toFixed(1)+'초'}</span>`;
   }
   let h = `<div class="dhead"><h2>${m
-    ? `${esc(m.experiment)} · <span class="cite">${esc(m.config)}</span> · ${
+    ? `${esc(expTitle(m.experiment))} · <span class="cite">${esc(m.config)}</span> · ${
         esc(m.task_id)}`
     : esc(r.run_id)} <span class="mut" style="font-weight:400;font-size:.8em">${
       esc(r.run_id)}</span></h2>`;
+  if (m && expDesc(m.experiment))
+    h += `<p class="cfgdesc">${esc(m.experiment)} — ${esc(expDesc(m.experiment))}</p>`;
   if (m && CONFIG_DESC[m.config])
-    h += `<p class="cfgdesc">${esc(m.config)} = ${esc(CONFIG_DESC[m.config])}</p>`;
+    h += `<p class="cfgdesc">${esc(m.config)} 설정 = ${esc(CONFIG_DESC[m.config])}</p>`;
   if (m) {
     h += `<div>` +
       `<span class="chip ${m.success ? 'good' : 'fail'}" title="기대한 위키 페이지를 ` +
