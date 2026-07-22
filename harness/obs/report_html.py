@@ -89,6 +89,7 @@ def collect() -> dict:
 
 _HTML = """<!doctype html>
 <html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>하네스 실험 뷰어</title>
 <style>
   :root { --bg:#fff; --fg:#1a1a1a; --mut:#777; --line:#e3e3e3; --card:#f7f7f8;
@@ -135,11 +136,12 @@ _HTML = """<!doctype html>
   #dashHint { padding:0 20px 6px; color:var(--mut); font-size:.86em; }
   #dashBody { display:flex; gap:14px; flex-wrap:wrap; padding:0 20px 16px;
               align-items:flex-start; }
-  .expcard { border:1px solid var(--line); border-radius:10px; background:var(--bg); }
+  .expcard { border:1px solid var(--line); border-radius:10px; background:var(--bg);
+             max-width:100%; }
   .expcard > summary { cursor:pointer; padding:9px 14px; user-select:none;
     font-size:.95em; white-space:nowrap; }
   .expcard > summary .mut { font-size:.9em; }
-  .cardbody { padding:2px 14px 13px; }
+  .cardbody { padding:2px 14px 13px; overflow-x:auto; }
   .barrow { display:flex; align-items:center; gap:8px; margin:4px 0; cursor:pointer;
             font-size:.9em; }
   .barrow:hover .blabel { color:var(--acc); }
@@ -218,6 +220,21 @@ _HTML = """<!doctype html>
          vertical-align:middle; }
   h3 { font-size:.95em; margin:18px 0 4px; }
   .mut { color:var(--mut); }
+  /* ── 반응형: 발표 배율 150% 등 좁은 화면 ─────────────────────
+     가로폭이 좁아지면 목록/상세를 좌우 대신 위아래로 쌓고,
+     스플리터는 상하(높이) 조절로 동작한다. */
+  @media (max-width: 1100px) {
+    header { padding:10px 14px; gap:10px; }
+    .filters, #dash > summary, #dashHint { padding-left:14px; padding-right:14px; }
+    #dashBody { padding:0 14px 14px; }
+    #dash { max-height:42vh; }
+    .btrack { width:130px; }
+    .blabel { width:80px; }
+    main { flex-direction:column; }
+    #list { width:100% !important; min-width:0; height:36vh; }
+    #split { width:auto; height:7px; cursor:row-resize; }
+    #detail { min-width:0; padding:0 14px 22px; }
+  }
 </style></head><body>
 <header><h1>하네스 실험 뷰어</h1>
   <span class="sub">생성 __GENERATED__ · 표시 <span id="nRuns"></span> /
@@ -293,7 +310,8 @@ _HTML = """<!doctype html>
   <h3>조작법</h3>
   <p>· 요약의 막대나 표 칸을 클릭 → 아래 목록이 그 조건으로 좁혀집니다<br>
      · 목록에서 행 클릭 또는 <b>↑↓</b> 키 → 오른쪽에 상세(대화 원문)<br>
-     · 목록과 상세 사이 세로 줄을 드래그 → 폭 조절 (더블클릭 = 원위치)<br>
+     · 목록과 상세 사이 구분선을 드래그 → 크기 조절 (더블클릭 = 원위치).
+       화면이 좁으면(발표 배율 150% 등) 목록·상세가 위아래로 쌓입니다<br>
      · 오른쪽 위 <b>가− / 가＋</b> → 글자 크기 조절</p>
 </dialog>
 
@@ -400,14 +418,25 @@ $('fsPlus').onclick = () => { fs = Math.min(20, fs + 1); applyFs(); };
 applyFs();
 $('btnHelp').onclick = () => $('help').showModal();
 
-// ── 리스트/상세 폭 조절 스플리터 ──────────────────────────────
+// ── 리스트/상세 크기 조절 스플리터 ────────────────────────────
+// 넓은 화면: 좌우 폭 조절 · 좁은 화면(발표 배율 150% 등): 상하 높이 조절
+const narrowMq = window.matchMedia('(max-width: 1100px)');
 let dragging = false;
 $('split').onmousedown = e => { dragging = true; e.preventDefault(); };
 window.addEventListener('mousemove', e => { if (!dragging) return;
-  const w = Math.min(Math.max(e.clientX, 280), window.innerWidth - 300);
-  $('list').style.width = w + 'px'; });
+  if (narrowMq.matches) {
+    const top = $('list').getBoundingClientRect().top;
+    const h = Math.min(Math.max(e.clientY - top, 110), window.innerHeight - top - 160);
+    $('list').style.height = h + 'px';
+  } else {
+    const w = Math.min(Math.max(e.clientX, 280), window.innerWidth - 300);
+    $('list').style.width = w + 'px';
+  } });
 window.addEventListener('mouseup', () => dragging = false);
-$('split').ondblclick = () => $('list').style.width = '44%';
+$('split').ondblclick = () => { $('list').style.width = ''; $('list').style.height = ''; };
+// 배율/창 크기 변경으로 레이아웃 모드가 바뀌면 수동 조절값 초기화
+narrowMq.addEventListener('change', () => {
+  $('list').style.width = ''; $('list').style.height = ''; });
 
 function fillSelect(el, counts, label) {
   const keys = Object.keys(counts).sort((a,b) =>
