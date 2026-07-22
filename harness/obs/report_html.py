@@ -269,24 +269,26 @@ _HTML = """<!doctype html>
     없으면 "다시 써오라"고 돌려보냄</span></div>
 
   <h3>실험 이름 읽는 법</h3>
-  <p>이 프로젝트는 단계(마일스톤)를 M1, M2, M3…으로 셉니다. 실험 이름 앞의
-    <b>m3 / m4</b>는 "3단계 / 4단계에서 한 실험"이라는 뜻일 뿐, 모델 이름이
-    아닙니다. 이름 끝의 <b>-r2</b>는 round 2, 즉 <b>같은 실험의 2회차
-    재측정</b>입니다 — 1회차 때는 점수 같은 요약 숫자만 저장했는데, 나중에
-    모델과 오간 대화 원문까지 통째로 기록하도록 프로그램을 고친 뒤 한 번 더
-    돌린 것입니다. 그래서 대화 원문이 보고 싶으면 -r2 쪽 런을 열면 됩니다.</p>
+  <p>실험 이름 앞의 <b>m3 / m4</b>는 프로젝트가 진행된 단계(마일스톤) 번호입니다
+    — 3단계에서 한 실험이 m3. 모델 이름이 아닙니다. 이름 끝의 <b>-r2</b>는
+    round 2, 즉 2회차 측정이라는 뜻입니다. 각 실험은 두 번 돌렸는데 1회차는
+    점수 같은 요약 숫자만 남겼고, 2회차는 모델과 오간 <b>대화 원문까지 통째로
+    기록</b>했습니다. 이 화면에는 대화 원문이 있는 2회차만 표시합니다.</p>
   <dl>
-    <dt>m3-validity — 검증 장치 실험</dt><dd>도구 요청 형식을 검사·수리하는
-      장치(validator·retry·가드레일)를 하나씩 켜며 오류가 줄어드는지 측정.
-      결과: 장치가 없어도 오류가 0이었음 — 검증은 성능 향상이 아니라 보험</dd>
-    <dt>m4-planner — 개입 실험</dt><dd>여러 페이지를 이어 봐야 답이 나오는
-      어려운 질문에서, "먼저 계획을 세워라"(+planner) 같은 적극 개입이 도움이
-      되는지 측정. 결과: 오히려 점수가 떨어질 수 있음</dd>
-    <dt>m4-floor — 바닥 측정</dt><dd>하네스를 아예 안 붙인 밑바닥 두 조건
-      (생 모델 raw, 도구만 준 baseline)을 같은 어려운 질문으로 측정.
-      결과: 검색 도구를 주는 것만으로 0% → 79%</dd>
-    <dt>…-r2 — 2회차 재측정</dt><dd>위 설명대로, 대화 원문까지 기록되는
-      개선판으로 같은 실험을 다시 돌린 것 (숫자가 1회차와 약간 다를 수 있음)</dd>
+    <dt>검증 장치 실험 (m3-validity-r2)</dt><dd>모델이 검색·읽기 도구를 요청할
+      때 형식이 깨지는지 보고, 이를 막는 장치를 하나씩 켜며 비교합니다 —
+      아무 장치 없음(baseline) → 형식 검사(+validator) → 깨지면 재시도(+retry)
+      → 반복 낭비 차단까지 전부(full). 결과: 장치가 없어도 형식 오류 0건.
+      검증 장치는 점수를 올리는 게 아니라 만일의 사고에 대비한 보험이었습니다</dd>
+    <dt>개입 실험 (m4-planner-r2)</dt><dd>여러 페이지를 이어 봐야 답이 나오는
+      어려운 질문에서, 기본 하네스(control) 위에 두 가지 개입을 얹어 비교합니다
+      — "답하기 전에 계획부터 세워라"(+planner), "근거 인용이 없으면 다시
+      써와라"(+evidence). 결과: 개입할수록 오히려 점수가 떨어질 수 있었습니다
+      (83% → 79% → 63%)</dd>
+    <dt>바닥 측정 (m4-floor)</dt><dd>하네스를 아예 안 붙인 밑바닥 두 조건을
+      같은 어려운 질문으로 측정합니다 — 위키를 볼 수단이 전혀 없는 생 모델(raw)
+      과 검색 도구만 준 모델(baseline). 결과: 도구를 주는 것만으로 성공률이
+      0%에서 79%로 올랐습니다. 지식 접근 자체가 가장 큰 지렛대였습니다</dd>
   </dl>
 
   <h3>용어 사전</h3>
@@ -319,7 +321,7 @@ _HTML = """<!doctype html>
   <select id="fExp"></select><select id="fCfg"></select><select id="fTask"></select>
   <select id="fOk"><option value="">성공/실패 전체</option>
     <option value="1">성공만</option><option value="0">실패만</option></select>
-  <input type="text" id="fText" placeholder="검색: 답변 내용·run id">
+  <input type="text" id="fText" placeholder="검색: 답변 내용·실행 ID">
   <button id="fReset">필터 초기화</button>
 </div>
 <details id="dash" open><summary>📊 실험 요약 (접기/펼치기)</summary>
@@ -346,7 +348,11 @@ _HTML = """<!doctype html>
 <script type="application/json" id="data">__DATA__</script>
 <script>
 const D = JSON.parse(document.getElementById('data').textContent);
-const runs = D.runs, suite = D.suite;
+// 발표용 정리: 같은 실험의 1회차(요약 숫자만 기록)는 숨기고, 대화 원문까지
+// 기록된 2회차(-r2)만 보여준다. 데이터 자체는 파일 안에 그대로 남아 있다.
+const HIDDEN_EXPS = new Set(['m3-validity', 'm4-planner']);
+const runs = D.runs.filter(r => !(r.meta && HIDDEN_EXPS.has(r.meta.experiment)));
+const suite = D.suite;
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const short = t => t ? t.replace('T',' ').slice(5,19) : '';
@@ -365,26 +371,29 @@ const CONFIG_DESC = {
   '+conditional': 'control + 문제가 있을 때만 조건부로 반려',
 };
 // 실험 코드네임 → [한글 제목, 처음 보는 사람용 설명]
+// 화면에 보이는 실험(r2·floor)은 "무엇을 어떻게 측정했고 결과가 뭔지"까지 담는다.
 const EXP_KO = {
-  'm3-validity': ['검증 장치 실험',
-    '도구 요청 형식을 검사·수리하는 장치를 하나씩 켜며 오류가 줄어드는지 측정'],
-  'm3-validity-r2': ['검증 장치 실험 · 2회차 재측정',
-    '같은 실험을 한 번 더 돌린 것 — 1회차엔 요약 숫자만 남아서, 대화 원문까지 ' +
-    '기록되는 개선판으로 재측정 (r2 = round 2)'],
-  'm4-planner': ['개입 실험',
-    '"먼저 계획을 세워라"(+planner), "근거 없으면 반려"(+evidence) 같은 적극 ' +
-    '개입이 어려운 질문에 도움 되는지 측정'],
-  'm4-planner-r2': ['개입 실험 · 2회차 재측정',
-    '같은 실험을 한 번 더 돌린 것 — 대화 원문까지 기록되는 개선판으로 재측정 ' +
-    '(r2 = round 2)'],
+  'm3-validity-r2': ['검증 장치 실험',
+    '모델이 검색·읽기 도구를 요청할 때 형식이 깨지는지 보고, 이를 막는 장치를 ' +
+    '하나씩 켜며 비교 — 아무 장치 없음(baseline) → 형식 검사(+validator) → ' +
+    '깨지면 재시도(+retry) → 반복 낭비 차단까지(full). 결과: 장치가 없어도 ' +
+    '형식 오류 0건 — 검증 장치는 점수를 올리는 게 아니라 만일에 대비한 보험'],
+  'm4-planner-r2': ['개입 실험',
+    '여러 페이지를 이어 봐야 답이 나오는 어려운 질문에서, 기본 하네스(control) ' +
+    '위에 개입을 얹어 비교 — "답하기 전에 계획부터 세워라"(+planner), ' +
+    '"근거 인용이 없으면 다시 써와라"(+evidence). 결과: 개입이 오히려 점수를 ' +
+    '떨어뜨릴 수 있음 (83% → 79% → 63%)'],
   'm4-floor': ['바닥 측정 — 생 모델 vs 도구만 준 모델',
-    '하네스를 아예 안 붙인 밑바닥 두 조건을 측정 — 검색 도구를 주는 것만으로 ' +
-    '성공률이 0%에서 79%로 오른다'],
+    '하네스를 아예 안 붙인 밑바닥 두 조건을 같은 어려운 질문으로 측정 — ' +
+    '위키를 볼 수단이 전혀 없는 생 모델(raw)과, 검색 도구만 준 모델(baseline). ' +
+    '결과: 도구를 주는 것만으로 성공률 0% → 79%'],
+  'm3-validity': ['검증 장치 실험 · 1회차', '요약 숫자만 기록된 첫 측정'],
+  'm4-planner': ['개입 실험 · 1회차', '요약 숫자만 기록된 첫 측정'],
 };
 // 좁은 칸(목록·필터)용 축약 이름
 const EXP_SHORT = {
-  'm3-validity': '검증 장치', 'm3-validity-r2': '검증 장치 ②',
-  'm4-planner': '개입', 'm4-planner-r2': '개입 ②', 'm4-floor': '바닥 측정',
+  'm3-validity-r2': '검증 장치', 'm4-planner-r2': '개입', 'm4-floor': '바닥 측정',
+  'm3-validity': '검증 장치 ①', 'm4-planner': '개입 ①',
 };
 const expTitle = e => EXP_KO[e] ? EXP_KO[e][0] : e;
 const expDesc = e => EXP_KO[e] ? EXP_KO[e][1] : '';
@@ -526,8 +535,8 @@ function renderDash(list) {
       return `<div class="barrow" data-exp="${esc(exp)}" data-cfg="${esc(cfg)}">` +
         `<span class="blabel" title="${esc(CONFIG_DESC[cfg] || cfg)}">${esc(cfg)}</span>` +
         `<span class="btrack"><span class="bfill ${cls}" style="width:${p}%"></span></span>` +
-        `<span class="bval">${p}% (${s.ok}/${s.n}) · ${
-          Math.round(s.tok/s.n).toLocaleString()} tok</span></div>`; }).join('');
+        `<span class="bval">${p}% (${s.ok}/${s.n}) · 평균 ${
+          Math.round(s.tok/s.n).toLocaleString()}토큰</span></div>`; }).join('');
     const taskIds = [...new Set(cfgsO.flatMap(c =>
       Object.keys(byExp[exp][c].tasks)))].sort();
     let matrix = '';
@@ -641,7 +650,7 @@ function evLine(e, maxLat) {
   }
   let info = '';
   if (e.phase === 'llm') info = `읽은 토큰 ${e.tokens?.prompt} · 쓴 토큰 ${
-    e.tokens?.completion} · 속도 ${e.tok_per_s} tok/s`;
+    e.tokens?.completion} · 속도 초당 ${e.tok_per_s}토큰`;
   else if (e.phase === 'retrieve') info = `${e.op}${e.hits ? ' → ' +
     e.hits.map(h => h.split('#')[0]).join(', ') : ''}`;
   else if (e.phase === 'tool_call') info = e.tool
@@ -688,8 +697,9 @@ function renderDetail() {
       `<span class="chip" title="깨진 도구 요청을 하네스가 고친 횟수 / 재시도 횟수">` +
       `수리 ${m.repaired}/${m.retries}</span>` +
       `<span class="chip" title="차단 = 반복 검색 등을 막음 · 반려 = 근거 없는 답을 ` +
-      `돌려보냄">차단 ${m.guardrail_blocks} · 반려 ${m.evidence_bounces}` +
-      `${m.fallback ? ' · 폴백' : ''}</span>` +
+      `돌려보냄 · 비상 마무리 = 정상 흐름이 막혀 마지막 수단으로 답을 낸 경우">` +
+      `차단 ${m.guardrail_blocks} · 반려 ${m.evidence_bounces}` +
+      `${m.fallback ? ' · 비상 마무리' : ''}</span>` +
       `<span class="chip" title="모델이 읽고 쓴 글 분량 (한글 1~2자 ≈ 1토큰)">토큰 ${
         tokOf(m).toLocaleString()}</span></div>`;
   } else { h += dur; }
