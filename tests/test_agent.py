@@ -145,6 +145,17 @@ def test_baseline_executes_unknown_tool_as_runtime_error():
     assert "툴 실행 오류" in tool_msgs[0]["content"]
 
 
+def test_no_tools_closed_book():
+    """생 LLM 대조군: 툴을 아예 넘기지 않고, 시스템 프롬프트도 툴 언급이 없어야 한다."""
+    toggles = HarnessToggles(validator=False, retry=False, guardrails=False, no_tools=True)
+    client = FakeClient([FakeResult(content="클로즈드북 답")])
+    r = AgentLoop(make_registry(), toggles, client=client).run("과제")
+    assert r.answer == "클로즈드북 답" and r.tool_calls_total == 0
+    assert client.calls[0]["tools"] is None
+    system = client.calls[0]["messages"][0]["content"]
+    assert "툴" not in system and "read_page" not in system
+
+
 def test_step_cap_forces_fallback():
     from harness import config
 

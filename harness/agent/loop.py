@@ -27,6 +27,14 @@ SYSTEM_PROMPT = """당신은 개인 지식 위키를 탐색해 질문에 답하�
 - 최종 답에는 근거 페이지를 [[페이지명]] 형식으로 인용하라.
 - 위키에서 찾지 못한 내용은 지어내지 말라."""
 
+# 생 LLM 대조군 — 위키 접근 수단이 전혀 없는 클로즈드북 조건.
+# 실패는 모델 능력 부족이 아니라 "개인 지식은 파라미터에 없다"의 측정이다.
+RAW_SYSTEM_PROMPT = """당신은 개인 지식 위키 관련 질문에 답하는 어시스턴트다.
+
+- 아는 범위에서 한국어로 답하라.
+- 근거 페이지를 안다면 [[페이지명]] 형식으로 인용하라.
+- 모르는 내용은 지어내지 말라."""
+
 GUARDRAIL_PROMPT_LINE = "\n- 실패한 툴 콜을 절대 같은 인자로 반복하지 말라. 실패하면 다른 툴이나 다른 인자를 시도하라."
 
 # M4 개입 A — 계획 강제 프롬프트 (lab-notes/003: 조기 답변 공략)
@@ -46,6 +54,7 @@ class HarnessToggles:
     guardrails: bool = True
     planner_prompt: bool = False    # 개입 A: 프롬프트 한 줄
     evidence_check: bool = False    # 개입 B: 인용 페이지를 read_page로 안 읽었으면 반려
+    no_tools: bool = False          # 생 LLM 대조군: 툴 미제공 클로즈드북 단발 응답
 
 
 @dataclass
@@ -85,7 +94,7 @@ class AgentLoop:
 
     # ── 메인 루프 ────────────────────────────────────────────────────────
     def run(self, task: str) -> AgentResult:
-        system = SYSTEM_PROMPT
+        system = RAW_SYSTEM_PROMPT if self.t.no_tools else SYSTEM_PROMPT
         if self.t.guardrails:
             system += GUARDRAIL_PROMPT_LINE
         if self.t.planner_prompt:
@@ -285,7 +294,7 @@ class AgentLoop:
     def _chat(self, messages, res: AgentResult, *, tools: bool = True):
         r = self.client.chat(
             messages,
-            tools=self.registry.openai_tools() if tools else None,
+            tools=self.registry.openai_tools() if tools and not self.t.no_tools else None,
             temperature=config.DEFAULT_TEMPERATURE,
             max_tokens=500,
         )

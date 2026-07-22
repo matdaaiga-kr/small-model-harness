@@ -42,3 +42,16 @@ experiments:
       +evidence: { validator: true, retry: true, guardrails: true, evidence_check: true }
     tasks: [q-101, q-102, q-103, q-107, q-108, q-109, q-110, q-111]
     repeats: 3
+
+  # ── 사다리 바닥 채우기 (2026-07-22, 발표용) — 같은 멀티홉 태스크에서
+  # 생 LLM과 무하네스 에이전트가 어디까지 가는지. r2와 같은 코드 버전이라
+  # raw → baseline → control → +planner → +evidence 직접 비교 가능.
+  #   raw:      툴 미제공 클로즈드북 — 실패는 능력 부족이 아니라 "개인 지식은
+  #             파라미터에 없다"의 측정 (RAW_SYSTEM_PROMPT 사용)
+  #   baseline: 툴은 주되 validator/retry/guardrails 전부 off
+  m4-floor:
+    configs:
+      raw:      { validator: false, retry: false, guardrails: false, no_tools: true }
+      baseline: { validator: false, retry: false, guardrails: false }
+    tasks: [q-101, q-102, q-103, q-107, q-108, q-109, q-110, q-111]
+    repeats: 3
