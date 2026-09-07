@@ -1,9 +1,13 @@
 # small-model-harness
 
+> [!NOTE]
+>
 > ### Without a Harness: Making an 8B Open Model a Reliable Agent on a 16GB Laptop
 >
 > Open Source Summit Japan + Automotive Linux Summit + Embedded Linux Conference Asia 2026
+> 
 > Open AI & Data 트랙 (Open Models), Session Presentation 30~40분, 영어 발표
+> 
 > **2026년 8월 20일 제출, 심사 중입니다.**
 >
 > 발표에서 말하는 수치는 전부 이 저장소 안에 있습니다.
@@ -41,11 +45,10 @@ MacBook Air M2 (16GB) 위에서 **오픈소스 로컬 LLM으로 직접 에이전
 
 ## 만든 사람
 
-<img src="https://avatars.githubusercontent.com/u/90031820?s=160" width="80" align="left" alt="이시영" />
+<img src="https://avatars.githubusercontent.com/u/90031820?s=160" width="80" align="left" hspace="20" alt="이시영" />
 
 **이시영 (LEE SIYOUNG)** [@ThisTimeNull](https://github.com/ThisTimeNull)
-LG CNS Innovation Studio Facilitator, Microsoft Certified Trainer
-대구 AI 개발자 커뮤니티 [맞다AI가](https://github.com/matdaaiga-kr) 워크숍 운영
+LG CNS Innovation Studio Facilitator, Microsoft Certified Trainer, [맞다AI가](https://github.com/matdaaiga-kr) 운영진
 
 <br clear="left" />
 
