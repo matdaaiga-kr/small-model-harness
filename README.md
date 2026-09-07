@@ -1,4 +1,14 @@
-# local-llm-harness-engineering
+# small-model-harness
+
+> ### Without a Harness: Making an 8B Open Model a Reliable Agent on a 16GB Laptop
+>
+> Open Source Summit Japan + Automotive Linux Summit + Embedded Linux Conference Asia 2026
+> Open AI & Data 트랙 (Open Models), Session Presentation 30~40분, 영어 발표
+> **2026년 8월 20일 제출, 심사 중입니다.**
+>
+> 발표에서 말하는 수치는 전부 이 저장소 안에 있습니다.
+> [reports/](reports/)에 어블레이션 측정 원본이, [docs/lab-notes/](docs/lab-notes/)에
+> 반증된 가설과 무효 처리한 실험이 지운 흔적 없이 남아 있습니다.
 
 MacBook Air M2 (16GB) 위에서 **오픈소스 로컬 LLM으로 직접 에이전트 하네스를 구축**하는 학습 프로젝트.
 
@@ -28,3 +38,16 @@ MacBook Air M2 (16GB) 위에서 **오픈소스 로컬 LLM으로 직접 에이전
 - Obsidian 위키 저장소에 코드를 넣지 않는다 (위키는 순수 데이터베이스로 유지).
 - LangChain 등 에이전트 프레임워크를 쓰지 않는다 — 하네스의 각 계층(툴 레지스트리, 검증, 재시도,
   컨텍스트 예산)을 직접 만들어 보는 것이 목적이다.
+
+## 만든 사람
+
+<img src="https://avatars.githubusercontent.com/u/90031820?s=160" width="80" align="left" alt="이시영" />
+
+**이시영 (LEE SIYOUNG)** [@ThisTimeNull](https://github.com/ThisTimeNull)
+LG CNS Innovation Studio Facilitator, Microsoft Certified Trainer
+대구 AI 개발자 커뮤니티 [맞다AI가](https://github.com/matdaaiga-kr) 워크숍 운영
+
+<br clear="left" />
+
+개인 프로젝트입니다. 코드와 실험 설계, 문서를 혼자 작성했습니다.
+커뮤니티에서 이어서 볼 수 있도록 맞다AI가 조직에 두었습니다.
