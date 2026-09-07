@@ -47,7 +47,6 @@ MacBook Air M2 (16GB) 위에서 **오픈소스 로컬 LLM으로 직접 에이전
 
 <img src="https://avatars.githubusercontent.com/u/90031820?s=160" width="80" align="left" hspace="20" alt="이시영" />
 
-**이시영 (LEE SIYOUNG)** [@ThisTimeNull](https://github.com/ThisTimeNull)
-LG CNS Innovation Studio Facilitator, Microsoft Certified Trainer, [맞다AI가](https://github.com/matdaaiga-kr) 운영진
+**[이시영 (LEE SIYOUNG)](https://github.com/ThisTimeNull)** : LG CNS Innovation Studio Facilitator, Microsoft Certified Trainer, [맞다AI가](https://github.com/matdaaiga-kr) 운영진
 
 <br clear="left" />
