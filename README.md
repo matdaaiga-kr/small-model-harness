@@ -43,7 +43,7 @@ MacBook Air M2 (16GB) 위에서 **오픈소스 로컬 LLM으로 직접 에이전
 - LangChain 등 에이전트 프레임워크를 쓰지 않는다 — 하네스의 각 계층(툴 레지스트리, 검증, 재시도,
   컨텍스트 예산)을 직접 만들어 보는 것이 목적이다.
 
-## 만든 사람
+## 제작자
 
 <img src="https://avatars.githubusercontent.com/u/90031820?s=160" width="80" align="left" hspace="20" alt="이시영" />
 
@@ -51,6 +51,3 @@ MacBook Air M2 (16GB) 위에서 **오픈소스 로컬 LLM으로 직접 에이전
 LG CNS Innovation Studio Facilitator, Microsoft Certified Trainer, [맞다AI가](https://github.com/matdaaiga-kr) 운영진
 
 <br clear="left" />
-
-개인 프로젝트입니다. 코드와 실험 설계, 문서를 혼자 작성했습니다.
-커뮤니티에서 이어서 볼 수 있도록 맞다AI가 조직에 두었습니다.
